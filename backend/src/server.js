@@ -6,17 +6,11 @@ const morgan=require('morgan');
 const path=require('path');
 require('dotenv').config({path: path.join(__dirname,'..','.env')});
 
-const authRoutes=require('./routes/auth');
-const tariffRoutes=require('./routes/tariffs');
-const tariffRouteRoutes=require('./routes/tariffRoutes');
-const meterRoutes=require('./routes/meters');
-const alertRoutes=require('./routes/alerts');
-const paymentRoutes=require('./routes/payments');
-const firmwareRoutes=require('./routes/firmware');
-const healthRoutes=require('./routes/healthRoutes');
-const itvmRoutes=require('./routes/itvm');
-const otaRoutes=require('./routes/ota');
-const aiRoutes=require('./routes/ai');
+const ai = require('./routes/ai');
+const auth = require('./routes/auth');
+const authRoutes = require('./routes/authRoutes');
+const healthRoutes = require('./routes/healthRoutes');
+const tariffRoutes = require('./routes/tariffRoutes');
 
 const app=express();
 const PORT=process.env.PORT||3001;
@@ -42,17 +36,11 @@ app.get('/api/v1/health',(req,res)=>{
 });
 
 // API Routes
-app.use('/api/v1/auth',authRoutes);
-app.use('/api/v1/tariff',tariffRoutes);
-app.use('/api/v1/tariffs',tariffRouteRoutes);
-app.use('/api/v1/meters',meterRoutes);
-app.use('/api/v1/alerts',alertRoutes);
-app.use('/api/v1/payments',paymentRoutes);
-app.use('/api/v1/firmware',firmwareRoutes);
+app.use('/api/v1/ai',ai);
+app.use('/api/v1/auth',auth);
+app.use('/api/v1/authRoutes',authRoutes);
 app.use('/api/v1/health',healthRoutes);
-app.use('/api/v1/itvm',itvmRoutes);
-app.use('/api/v1',otaRoutes);
-app.use('/api/v1/ai',aiRoutes);
+app.use('/api/v1/tariffs',tariffRoutes);
 
 // 404 handler
 app.use((req,res)=>{
