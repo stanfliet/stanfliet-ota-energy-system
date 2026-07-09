@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react"
 import LoginForm from "./components/LoginForm"
-import Dashboard from "./components/Dashboard"
+import ClientDashboard from "./components/ClientDashboard"
 import ITVMDashboard from "./components/ITVMDashboard"
 import TariffSubmission from "./components/TariffSubmission"
 import PurchaseForm from "./components/PurchaseForm"
@@ -9,46 +9,51 @@ import MeterDashboard from "./components/MeterDashboard"
 
 const AUTH_TOKEN_KEY = "stanfliet_auth_token"
 const AUTH_USER_KEY = "stanfliet_user_data"
+const AUTH_METERS_KEY = "stanfliet_meters"
 
 function App() {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
+  const [meters, setMeters] = useState([])
   const [activeTab, setActiveTab] = useState("dashboard")
   const [loading, setLoading] = useState(true)
 
   useEffect(function() {
     var savedToken = localStorage.getItem(AUTH_TOKEN_KEY)
     var savedUser = localStorage.getItem(AUTH_USER_KEY)
+    var savedMeters = localStorage.getItem(AUTH_METERS_KEY)
     if (savedToken && savedUser) {
       try {
         setToken(savedToken)
         setUser(JSON.parse(savedUser))
+        if (savedMeters) setMeters(JSON.parse(savedMeters))
       } catch (e) {}
     }
     setLoading(false)
   }, [])
 
-  const handleLogin = function(userData, authToken) {
+  const handleLogin = function(userData, authToken, metersData) {
     setUser(userData)
     setToken(authToken)
+    setMeters(metersData || [])
     localStorage.setItem(AUTH_TOKEN_KEY, authToken)
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userData))
+    if (metersData) localStorage.setItem(AUTH_METERS_KEY, JSON.stringify(metersData))
   }
 
   const handleLogout = function() {
     setUser(null)
     setToken(null)
+    setMeters([])
     localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(AUTH_USER_KEY)
+    localStorage.removeItem(AUTH_METERS_KEY)
     setActiveTab("dashboard")
   }
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center",
-        background: "var(--bg, #f8fafc)", color: "var(--text, #1e293b)", fontSize: 14
-      }}>
+      <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "var(--bg, #f8fafc)", color: "var(--text, #1e293b)", fontSize: 14 }}>
         Loading...
       </div>
     )
@@ -56,11 +61,7 @@ function App() {
 
   if (!user || !token) {
     return (
-      <div style={{
-        minHeight: "100vh", background: "var(--bg, #f8fafc)",
-        display: "flex", justifyContent: "center", alignItems: "center",
-        padding: 24
-      }}>
+      <div style={{ minHeight: "100vh", background: "var(--bg, #f8fafc)", display: "flex", justifyContent: "center", alignItems: "center", padding: 24 }}>
         <LoginForm onLogin={handleLogin} />
       </div>
     )
@@ -70,17 +71,21 @@ function App() {
     { key: "dashboard", label: "Dashboard", icon: "📊" },
     { key: "purchase", label: "Buy Electricity", icon: "⚡" },
     { key: "transfer", label: "Send Credits", icon: "🔄" },
-    { key: "meters", label: "Meters", icon: "🔌" },
-    { key: "itvm", label: "Tariff ITVM", icon: "🔐" },
-    { key: "submit-tariff", label: "New Tariff", icon: "📝" }
+    { key: "meters", label: "My Meters", icon: "📟" }
   ]
+
+  // Admin/operator tabs
+  if (user.role === "admin" || user.role === "operator" || user.role === "auditor") {
+    tabs.push({ key: "itvm", label: "Tariff ITVM", icon: "🔐" })
+    tabs.push({ key: "submit-tariff", label: "New Tariff", icon: "📝" })
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg, #f8fafc)" }}>
       {/* Header */}
       <div style={{
         background: "linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)",
-        padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
         position: "sticky", top: 0, zIndex: 100
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -91,7 +96,8 @@ function App() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{user.email || user.name}</span>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{user.name || user.email}</span>
+          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>{user.role || "customer"}</span>
           <button onClick={handleLogout} style={{
             padding: "6px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.3)",
             background: "transparent", color: "white", fontSize: 12, cursor: "pointer"
@@ -101,7 +107,7 @@ function App() {
 
       {/* Tab Navigation */}
       <div style={{
-        display: "flex", gap: 4, padding: "12px 24px", overflowX: "auto",
+        display: "flex", gap: 4, padding: "8px 24px", overflowX: "auto",
         background: "var(--surface, #fff)", borderBottom: "1px solid var(--border, #e2e8f0)"
       }}>
         {tabs.map(function(tab) {
@@ -123,7 +129,7 @@ function App() {
 
       {/* Page Content */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 8px" }}>
-        {activeTab === "dashboard" && <Dashboard user={user} token={token} />}
+        {activeTab === "dashboard" && <ClientDashboard user={user} token={token} />}
         {activeTab === "purchase" && <PurchaseForm />}
         {activeTab === "transfer" && <TransferForm />}
         {activeTab === "meters" && <MeterDashboard />}
