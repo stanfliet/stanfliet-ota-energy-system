@@ -15,6 +15,7 @@ const paymentRoutes=require('./routes/payments');
 const firmwareRoutes=require('./routes/firmware');
 const healthRoutes=require('./routes/healthRoutes');
 const itvmRoutes=require('./routes/itvm');
+const otaRoutes=require('./routes/ota');
 
 const app=express();
 const PORT=process.env.PORT||3001;
@@ -39,7 +40,7 @@ app.get('/api/v1/health',(req,res)=>{
   res.json({status: 'healthy',timestamp: new Date().toISOString(),uptime: process.uptime()});
 });
 
-// Routes
+// API Routes
 app.use('/api/v1/auth',authRoutes);
 app.use('/api/v1/tariff',tariffRoutes);
 app.use('/api/v1/tariffs',tariffRouteRoutes);
@@ -49,6 +50,7 @@ app.use('/api/v1/payments',paymentRoutes);
 app.use('/api/v1/firmware',firmwareRoutes);
 app.use('/api/v1/health',healthRoutes);
 app.use('/api/v1/itvm',itvmRoutes);
+app.use('/api/v1',otaRoutes);  // OTA, P2P, Reversal, Purchase routes
 
 // 404 handler
 app.use((req,res)=>{

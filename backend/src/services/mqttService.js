@@ -1,39 +1,96 @@
-﻿const mqtt = require('mqtt');
+﻿const EventEmitter = require('events');
 
-function connectMQTT(app) {
-  const brokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
-  const client = mqtt.connect(brokerUrl, {
-    clientId: 'stanfliet-backend-' + Math.random().toString(36).substring(7),
-    username: process.env.MQTT_USERNAME,
-    password: process.env.MQTT_PASSWORD,
-    reconnectPeriod: 5000,
-    connectTimeout: 30000
-  });
+class MQTTService extends EventEmitter {
+  constructor() {
+    super();
+    this.connected = false;
+    this.topics = {};
+    this.subscriptions = [];
+    this.meters = {};
+    this.messageLog = [];
+  }
 
-  client.on('connect', () => {
-    console.log('MQTT connected to', brokerUrl);
-    client.subscribe('stanfliet/ota/v1/meters/+/telemetry', { qos: 1 });
-    client.subscribe('stanfliet/ota/v1/meters/+/alert', { qos: 1 });
-    client.subscribe('stanfliet/ota/v1/meters/+/heartbeat', { qos: 1 });
-    app.set('mqttClient', client);
-  });
+  connect() {
+    this.connected = true;
+    this.emit('connected');
+    return true;
+  }
 
-  client.on('message', (topic, payload) => {
-    try {
-      const data = JSON.parse(payload.toString());
-      const meterSerial = topic.split('/')[4];
-      if (topic.includes('/telemetry') && app.broadcast) {
-        app.broadcast({ type: 'meter_telemetry', meterSerial, data, timestamp: new Date().toISOString() });
+  disconnect() {
+    this.connected = false;
+    this.emit('disconnected');
+  }
+
+  publish(topic, message, qos, retain) {
+    if (!this.connected) {
+      this.emit('error', new Error('MQTT not connected'));
+      return false;
+    }
+    var msgObj = {
+      topic: topic,
+      message: typeof message === 'string' ? message : JSON.stringify(message),
+      qos: qos || 1,
+      retain: retain || false,
+      timestamp: new Date().toISOString()
+    };
+    this.messageLog.push(msgObj);
+    this.emit('message', msgObj);
+
+    // Simulate meter acknowledgment
+    var topicParts = topic.split('/');
+    if (topicParts.length >= 5 && topicParts[4] === 'commands') {
+      var meterId = topicParts[3];
+      this.simulateMeterAck(meterId, topic, msgObj);
+    }
+
+    return true;
+  }
+
+  subscribe(topic, callback) {
+    this.subscriptions.push({ topic: topic, callback: callback });
+    this.emit('subscribed', topic);
+  }
+
+  simulateMeterAck(meterId, commandTopic, commandMsg) {
+    var self = this;
+    setTimeout(function() {
+      var ackTopic = 'stanfliet/ota/v1/meters/' + meterId + '/status/command_ack';
+      var ack = {
+        command_topic: commandTopic,
+        status: 'received',
+        meter_id: meterId,
+        timestamp: Date.now(),
+        message: 'Command received and processing'
+      };
+      self.emit('message', { topic: ackTopic, message: JSON.stringify(ack), timestamp: new Date().toISOString() });
+      if (self.subscriptions.length > 0) {
+        self.subscriptions.forEach(function(sub) {
+          if (ackTopic.includes(sub.topic.replace('+', '').replace('#', ''))) {
+            sub.callback(ackTopic, JSON.stringify(ack));
+          }
+        });
       }
-      if (topic.includes('/alert') && app.broadcast) {
-        app.broadcast({ type: 'meter_alert', meterSerial, severity: data.severity, title: data.title, timestamp: new Date().toISOString() });
-      }
-    } catch (err) { console.error('MQTT error:', err.message); }
-  });
+    }, 500 + Math.random() * 1000);
+  }
 
-  client.on('error', (err) => console.error('MQTT error:', err.message));
-  app.set('mqttClient', client);
-  return client;
+  registerMeter(meterId, config) {
+    this.meters[meterId] = config || { status: 'online' };
+    var statusTopic = 'stanfliet/ota/v1/meters/' + meterId + '/status';
+    this.publish(statusTopic, JSON.stringify({ meter_id: meterId, status: 'registered', timestamp: Date.now() }), 1, true);
+  }
+
+  getMeterStatus(meterId) {
+    return this.meters[meterId] || null;
+  }
+
+  getMetrics() {
+    return {
+      connected: this.connected,
+      meterCount: Object.keys(this.meters).length,
+      totalMessages: this.messageLog.length,
+      activeSubscriptions: this.subscriptions.length
+    };
+  }
 }
 
-module.exports = { connectMQTT };
+module.exports = new MQTTService();
