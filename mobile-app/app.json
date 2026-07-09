@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Stanfliet OTA Energy",
+    "slug": "stanfliet-ota-energy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": { "backgroundColor": "#1a365d" },
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.stanfliet.otaenergy" },
+    "android": { "adaptiveIcon": { "backgroundColor": "#1a365d" }, "package": "com.stanfliet.otaenergy" },
+    "web": { "favicon": "./assets/favicon.png" },
+    "plugins": [["expo-location", { "locationAlwaysAndWhenInUsePermission": "Allow Stanfliet OTA to access your location for meter tracking.", "locationAlwaysPermission": "Allow Stanfliet OTA to track your meter location in the background.", "locationWhenInUsePermission": "Allow Stanfliet OTA to access your location for meter tracking." }]]
+  }
+}

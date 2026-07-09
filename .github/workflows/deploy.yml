@@ -1,0 +1,135 @@
+﻿name: Stanfliet OTA CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: "18"
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: ./backend
+      - run: npx eslint src/
+        working-directory: ./backend
+        continue-on-error: true
+
+  test:
+    name: Run Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: ./backend
+      - run: npm test
+        working-directory: ./backend
+        env:
+          DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
+          NODE_ENV: test
+          JWT_SECRET: test_secret
+
+  build:
+    name: Build Frontend
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: ./frontend
+      - run: npm run build
+        working-directory: ./frontend
+
+  security-scan:
+    name: Security Scan
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+      - run: npm audit --audit-level=high
+        working-directory: ./backend
+        continue-on-error: true
+
+  deploy-staging:
+    name: Deploy Staging
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_STAGING_SERVICE_ID }}/deploys" \
+            -d '{}'
+
+  deploy-production:
+    name: Deploy Production
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://stanfliet-ota.vercel.app
+    steps:
+      - name: Deploy to Render
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}/deploys" \
+            -d '{}'
+      - name: Deploy to Vercel
+        run: |
+          npx vercel deploy --prod \
+            --token ${{ secrets.VERCEL_TOKEN }} \
+            --scope ${{ secrets.VERCEL_ORG_ID }}
+
+  notify:
+    name: Notify
+    needs: [deploy-production]
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification
+        run: |
+          curl -X POST -H "Content-type: application/json" \
+            --data '{"text":"🚀 Stanfliet OTA Deployment ${{ job.status }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

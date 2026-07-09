@@ -1,0 +1,36 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stanfliet-db
+    environment:
+      POSTGRES_USER: stanfliet_user
+      POSTGRES_PASSWORD: stanfliet_pass
+      POSTGRES_DB: stanfliet_ota
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [""CMD-SHELL"", ""pg_isready -U stanfliet_user -d stanfliet_ota""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: stanfliet-api
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://stanfliet_user:stanfliet_pass@postgres:5432/stanfliet_ota
+      NODE_ENV: production
+      JWT_SECRET: change_me_in_production
+      CORS_ORIGIN: http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
