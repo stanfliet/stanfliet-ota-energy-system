@@ -1,26 +1,23 @@
 ﻿const express = require('express');
 const router = express.Router();
-const os = require('os');
 
-router.get('/', (req, res) => {
-  res.json({
+router.get('/health', async (req, res) => {
+  const health = {
     status: 'healthy',
-    version: '1.0.0',
+    timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    memory: {
-      used: process.memoryUsage().rss,
-      free: os.freemem(),
-      total: os.totalmem()
-    },
-    cpu: os.cpus().length,
-    platform: process.platform,
-    node: process.version,
-    timestamp: new Date().toISOString()
-  });
-});
-
-router.get('/ping', (req, res) => {
-  res.json({ pong: true, timestamp: Date.now() });
+    components: { server: 'running', websocket: 'ready' }
+  };
+  try {
+    const pool = req.app.get('dbPool');
+    if (pool) {
+      const client = await pool.connect();
+      await client.query('SELECT 1');
+      client.release();
+      health.components.database = 'connected';
+    }
+  } catch (err) { health.components.database = 'disconnected'; health.status = 'degraded'; }
+  res.status(health.status === 'healthy' ? 200 : 503).json(health);
 });
 
 module.exports = router;

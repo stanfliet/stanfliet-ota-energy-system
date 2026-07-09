@@ -1,31 +1,37 @@
-﻿class TariffEngine {
-  constructor() {
-    this.historicalTariffs = {
-      'MYPD4': { year: 2019, tariff: 1.2346 },
-      'MYPD5': { year: 2022, tariff: 1.5842 },
-      'MYPD6_original': { year: 2025, tariff: 2.1437 },
-      'MYPD6_error': { year: 2025, tariff: 2.8574 }
+﻿const CryptoUtils = require('../utils/crypto');
+
+class TariffEngine {
+  static computeTariff(inputs) {
+    const { RAB, depreciation, returnOnAssets, totalVolumes, primaryEnergy, oAndM, iprep = 0, efficiencyFactor = 1.0, inflationAdjustment = 1.0 } = inputs;
+    const returnAmount = RAB * (returnOnAssets / 100);
+    const totalRevenue = returnAmount + depreciation + primaryEnergy + oAndM + parseFloat(iprep);
+    const adjustedRevenue = totalRevenue * efficiencyFactor * inflationAdjustment;
+    const tariffPerKwh = Math.round((adjustedRevenue / totalVolumes) * 10000) / 10000;
+    const computationHash = CryptoUtils.computeTariffHash(inputs);
+    const versionHash = CryptoUtils.computeVersionHash(inputs);
+    const zkpProof = CryptoUtils.generateZKPProof(inputs, { tariffPerKwh });
+
+    return { tariffPerKwh, returnAmount, totalRevenue, adjustedRevenue, computationHash, versionHash, zkpProof };
+  }
+
+  static verifyTariff(submission) {
+    const inputs = {
+      RAB: parseFloat(submission.rab),
+      depreciation: parseFloat(submission.depreciation),
+      returnOnAssets: parseFloat(submission.return_on_assets),
+      totalVolumes: parseFloat(submission.total_volumes_kwh),
+      primaryEnergy: parseFloat(submission.primary_energy_cost),
+      oAndM: parseFloat(submission.o_and_m_cost),
+      iprep: parseFloat(submission.iprep_cost || 0),
+      efficiencyFactor: parseFloat(submission.efficiency_factor || 1.0),
+      inflationAdjustment: parseFloat(submission.inflation_adjustment || 1.0)
     };
+    const result = this.computeTariff(inputs);
+    return { isValid: result.computationHash === submission.computation_hash, storedTariff: parseFloat(submission.tariff_per_kwh), computedTariff: result.tariffPerKwh, storedHash: submission.computation_hash, computedHash: result.computationHash };
   }
 
-  calculateTariff(inputs) {
-    const revenueRequirement =
-      inputs.rab * (inputs.returnOnAssets / 100) +
-      inputs.depreciation +
-      inputs.primaryEnergyCost +
-      inputs.oAndMCost +
-      (inputs.iprepCost || 0);
-
-    const adjustedVolume = inputs.totalVolumesKwh * (inputs.efficiencyFactor || 1.0);
-    const tariff = (revenueRequirement / adjustedVolume) * (inputs.inflationAdjustment || 1.0);
-
-    return Math.round(tariff * 10000) / 10000;
-  }
-
-  getHistoricalComparison(currentTariff) {
-    const last = this.historicalTariffs['MYPD5'].tariff;
-    const change = ((currentTariff - last) / last) * 100;
-    return { previousTariff: last, changePercent: Math.round(change * 100) / 100 };
+  static generateSubmissionId() {
+    return 'TARIFF-' + Date.now().toString(36).toUpperCase();
   }
 }
 
