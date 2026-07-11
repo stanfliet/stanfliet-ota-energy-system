@@ -338,6 +338,7 @@ function authenticateMiddleware(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
+    console.error('JWT verification failed:', err.message);
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }

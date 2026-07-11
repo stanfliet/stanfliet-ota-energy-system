@@ -21,6 +21,32 @@ export default function LoginForm({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
+  // Clear any stale tokens on mount to prevent JWT errors
+  useState(function() {
+    // Check if stored token is valid by trying to verify locally
+    // If there's a stored token but we're on the login page, clear it
+    const token = localStorage.getItem(AUTH_TOKEN_KEY)
+    if (token) {
+      try {
+        // Try to decode the JWT payload without verification (just to see expiry)
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          // Token expired - clear all stored data
+          localStorage.removeItem(AUTH_TOKEN_KEY)
+          localStorage.removeItem(AUTH_REFRESH_KEY)
+          localStorage.removeItem(USER_DATA_KEY)
+          localStorage.removeItem("stanfliet_meters")
+        }
+      } catch (e) {
+        // Corrupted token - clear it
+        localStorage.removeItem(AUTH_TOKEN_KEY)
+        localStorage.removeItem(AUTH_REFRESH_KEY)
+        localStorage.removeItem(USER_DATA_KEY)
+        localStorage.removeItem("stanfliet_meters")
+      }
+    }
+  }, [])
+
   const validateEmail = function(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
@@ -174,26 +200,12 @@ export default function LoginForm({ onLogin }) {
     setLoading(false)
   }
 
-  const handleSocialSignIn = async function(provider) {
-    setError("")
-    setLoading(true)
-    try {
-      setError(provider + " sign-in coming soon. Use email/password for now.")
-    } catch (err) {
-      setError(err.message)
-    }
-    setLoading(false)
-  }
-
   const updateField = function(field, value) {
     setFormData(function(prev) {
       const updated = Object.assign({}, prev, { [field]: value })
-
       if (field === "email") {
-        const adminDetected = checkAdminEmail(value)
-        setIsAdmin(adminDetected)
+        setIsAdmin(checkAdminEmail(value))
       }
-
       return updated
     })
   }
@@ -217,22 +229,15 @@ export default function LoginForm({ onLogin }) {
         boxShadow: "0 25px 50px rgba(0,0,0,0.4)",
         border: "1px solid #334155"
       }}>
+        {/* Logo & Header */}
         <div style={{ textAlign: "center", marginBottom: "30px" }}>
           <div style={{
-            width: "64px",
-            height: "64px",
-            borderRadius: "50%",
+            width: "64px", height: "64px", borderRadius: "50%",
             background: "linear-gradient(135deg, #f59e0b, #d97706)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto 16px",
-            fontSize: "28px",
-            color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 16px", fontSize: "28px", color: "#fff",
             boxShadow: "0 0 20px rgba(245,158,11,0.3)"
-          }}>
-            ⚡
-          </div>
+          }}>⚡</div>
           <h1 style={{ color: "#f1f5f9", fontSize: "24px", fontWeight: "700", margin: "0 0 6px", letterSpacing: "0.5px" }}>
             Stanfliet OTA
           </h1>
@@ -241,25 +246,23 @@ export default function LoginForm({ onLogin }) {
           </p>
         </div>
 
+        {/* Tab Buttons */}
         <div style={{ display: "flex", gap: "0", marginBottom: "24px", background: "#0f172a", borderRadius: "10px", padding: "4px" }}>
           <button onClick={() => { setMode("signin"); setError("") }} style={{
             flex: "1", padding: "12px 16px", border: "none", borderRadius: "8px", cursor: "pointer",
             fontSize: "14px", fontWeight: "600",
             background: mode === "signin" ? "#f59e0b" : "transparent",
             color: mode === "signin" ? "#0f172a" : "#64748b", transition: "all 0.2s"
-          }}>
-            Sign In
-          </button>
+          }}>Sign In</button>
           <button onClick={() => { setMode("signup"); setError("") }} style={{
             flex: "1", padding: "12px 16px", border: "none", borderRadius: "8px", cursor: "pointer",
             fontSize: "14px", fontWeight: "600",
             background: mode === "signup" ? "#f59e0b" : "transparent",
             color: mode === "signup" ? "#0f172a" : "#64748b", transition: "all 0.2s"
-          }}>
-            Create Account
-          </button>
+          }}>Create Account</button>
         </div>
 
+        {/* Error Message */}
         {error && (
           <div style={{
             background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
@@ -270,21 +273,18 @@ export default function LoginForm({ onLogin }) {
           </div>
         )}
 
+        {/* Sign In Form */}
         {mode === "signin" && (
           <form onSubmit={handleSignIn}>
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>
-                Email Address
-              </label>
+              <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Email Address</label>
               <input type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)}
                 placeholder="you@example.com" required
                 style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155",
                   borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
             </div>
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>
-                Password
-              </label>
+              <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Password</label>
               <div style={{ position: "relative" }}>
                 <input type={showPassword ? "text" : "password"} value={formData.password}
                   onChange={(e) => updateField("password", e.target.value)} placeholder="Enter your password" required
@@ -299,7 +299,7 @@ export default function LoginForm({ onLogin }) {
             </div>
             {loading && (
               <div style={{ textAlign: "center", color: "#f59e0b", fontSize: "13px", marginBottom: "12px" }}>
-                {loading ? "Signing in... (cold start may take 30s)" : ""}
+                Signing in... (cold start may take 30s)
               </div>
             )}
             <button type="submit" disabled={loading}
@@ -319,6 +319,7 @@ export default function LoginForm({ onLogin }) {
           </form>
         )}
 
+        {/* Sign Up Form */}
         {mode === "signup" && (
           <form onSubmit={handleSignUp}>
             <div style={{ marginBottom: "14px" }}>
@@ -327,6 +328,7 @@ export default function LoginForm({ onLogin }) {
                 style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155",
                   borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
             </div>
+
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Email Address *</label>
               <input type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} placeholder="you@example.com" required
@@ -339,6 +341,7 @@ export default function LoginForm({ onLogin }) {
                 </div>
               )}
             </div>
+
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Meter Number (11 digits) *</label>
               <input type="text" value={formData.meter_number}
@@ -350,16 +353,20 @@ export default function LoginForm({ onLogin }) {
               {formData.meter_number && formData.meter_number.length > 0 && (
                 <div style={{ marginTop: "4px", fontSize: "11px",
                   color: formData.meter_number.length === 11 ? "#10b981" : "#ef4444" }}>
-                  {formData.meter_number.length === 11 ? "✓ Valid 11-digit meter number" : formData.meter_number.length + "/11 digits entered"}
+                  {formData.meter_number.length === 11
+                    ? "✓ Valid 11-digit meter number"
+                    : formData.meter_number.length + "/11 digits entered"}
                 </div>
               )}
             </div>
+
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Phone Number (optional)</label>
               <input type="tel" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} placeholder="+27 123 456 789"
                 style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155",
                   borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
             </div>
+
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Password *</label>
               <input type={showPassword ? "text" : "password"} value={formData.password}
@@ -369,10 +376,13 @@ export default function LoginForm({ onLogin }) {
               {formData.password && formData.password.length > 0 && (
                 <div style={{ marginTop: "4px", fontSize: "11px",
                   color: formData.password.length >= 8 ? "#10b981" : "#ef4444" }}>
-                  {formData.password.length >= 8 ? "✓ Strong enough" : "At least 8 characters needed (" + formData.password.length + "/8)"}
+                  {formData.password.length >= 8
+                    ? "✓ Strong enough"
+                    : "At least 8 characters needed (" + formData.password.length + "/8)"}
                 </div>
               )}
             </div>
+
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", color: "#94a3b8", fontSize: "13px", fontWeight: "500", marginBottom: "6px" }}>Confirm Password *</label>
               <input type={showPassword ? "text" : "password"} value={formData.confirmPassword}
@@ -410,9 +420,7 @@ export default function LoginForm({ onLogin }) {
               <input type="checkbox" id="showPassSignup" checked={showPassword}
                 onChange={() => setShowPassword(!showPassword)}
                 style={{ accentColor: "#f59e0b", width: "16px", height: "16px" }} />
-              <label htmlFor="showPassSignup" style={{ color: "#64748b", fontSize: "13px", cursor: "pointer" }}>
-                Show passwords
-              </label>
+              <label htmlFor="showPassSignup" style={{ color: "#64748b", fontSize: "13px", cursor: "pointer" }}>Show passwords</label>
             </div>
 
             <button type="submit" disabled={loading}
@@ -432,6 +440,7 @@ export default function LoginForm({ onLogin }) {
           </form>
         )}
 
+        {/* Footer */}
         <div style={{ textAlign: "center", marginTop: "30px", paddingTop: "20px", borderTop: "1px solid #334155" }}>
           <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 4px" }}>
             By continuing, you agree to our Terms of Service and Privacy Policy.
