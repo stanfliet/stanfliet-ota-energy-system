@@ -2,11 +2,10 @@
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 const { supabase, supabaseAdmin } = require('../config/supabase');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'stanfliet_ota_secret_key_2026';
-const JWT_EXPIRY = '24h'; // Long-lived session for utility use
-const REFRESH_EXPIRY = '7d';
 
 // Helper to generate JWT
 function generateTokens(user) {
@@ -28,12 +27,19 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// Generate 11-digit SA meter number
+function generateMeterNumber() {
+  const prefix = 'SG';
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 9000 + 1000);
+  return prefix + timestamp + random;
+}
+
 // ==================== SIGN UP ====================
 router.post('/signup', async function(req, res) {
   try {
     const { email, password, name, phone } = req.body;
 
-    // Validate inputs
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
@@ -44,8 +50,8 @@ router.post('/signup', async function(req, res) {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
-    // Check if user already exists in Supabase
-    const { data: existingUser, error: lookupError } = await supabaseAdmin
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('email', email)
@@ -59,39 +65,44 @@ router.post('/signup', async function(req, res) {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Create user in Supabase
-    const { data: newUser, error: createError } = await supabaseAdmin
+    // Create user
+    const userId = uuidv4();
+    const { data: newUser, error: insertError } = await supabaseAdmin
       .from('users')
       .insert({
+        id: userId,
         email: email,
         password_hash: passwordHash,
         name: name,
-        phone: phone || null,
         role: 'customer',
+        phone: phone || null,
         created_at: new Date().toISOString()
       })
-      .select('id, email, name, role, created_at')
+      .select('id, email, name, role')
       .single();
 
-    if (createError) {
-      console.error('Supabase create error:', createError);
+    if (insertError) {
+      console.error('User insert error:', insertError);
       return res.status(500).json({ error: 'Failed to create account' });
     }
 
-    // Create a default meter for the user (11-digit SA meter number format)
-    const meterNumber = '770' + Date.now().toString().slice(-8); // 770 prefix + 8 digits = 11 digits
-    await supabaseAdmin
+    // Create meter for user
+    const meterNumber = generateMeterNumber();
+    const { data: meter, error: meterError } = await supabaseAdmin
       .from('meters')
       .insert({
         meter_number: meterNumber,
-        customer_id: newUser.id,
-        customer_name: name,
-        location: req.body.location || 'Not specified',
+        customer_id: userId,
         credit_balance: 0,
-        status: 'offline',
-        firmware_version: '1.0.0',
+        status: 'active',
         created_at: new Date().toISOString()
-      });
+      })
+      .select('meter_number')
+      .single();
+
+    if (meterError) {
+      console.error('Meter creation error (non-fatal):', meterError);
+    }
 
     // Generate tokens
     const tokens = generateTokens(newUser);
@@ -122,7 +133,6 @@ router.post('/signin', async function(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user by email
     const { data: user, error: findError } = await supabaseAdmin
       .from('users')
       .select('id, email, password_hash, name, role, phone')
@@ -133,25 +143,21 @@ router.post('/signin', async function(req, res) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Verify password
     const passwordValid = await bcrypt.compare(password, user.password_hash);
     if (!passwordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Update last login
     await supabaseAdmin
       .from('users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id);
 
-    // Get user's meters
     const { data: meters } = await supabaseAdmin
       .from('meters')
       .select('meter_number, credit_balance, status, location')
       .eq('customer_id', user.id);
 
-    // Generate tokens
     const tokens = generateTokens({
       id: user.id,
       email: user.email,
@@ -188,7 +194,6 @@ router.post('/refresh', async function(req, res) {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
-    // Get fresh user data
     const { data: user } = await supabaseAdmin
       .from('users')
       .select('id, email, name, role')
@@ -230,7 +235,6 @@ router.put('/profile', authenticateMiddleware, async function(req, res) {
     const updates = {};
     if (req.body.name) updates.name = req.body.name;
     if (req.body.phone) updates.phone = req.body.phone;
-    if (req.body.location) updates.location = req.body.location;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
@@ -261,7 +265,6 @@ router.put('/change-password', authenticateMiddleware, async function(req, res) 
       return res.status(400).json({ error: 'New password must be at least 8 characters' });
     }
 
-    // Verify current password
     const { data: user } = await supabaseAdmin
       .from('users')
       .select('password_hash')
@@ -271,7 +274,6 @@ router.put('/change-password', authenticateMiddleware, async function(req, res) 
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
     if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
 
-    // Hash new password
     const salt = await bcrypt.genSalt(12);
     const newHash = await bcrypt.hash(newPassword, salt);
 

@@ -1,4 +1,4 @@
-﻿CREATE EXTENSION IF NOT EXISTS ""uuid-ossp"";
+﻿CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE meter_status AS ENUM ('online', 'offline', 'warning', 'alert', 'disconnected', 'commissioning');
 CREATE TYPE alert_severity AS ENUM ('critical', 'high', 'medium', 'low', 'info');
@@ -8,27 +8,21 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    role VARCHAR(50) DEFAULT 'operator',
+    name VARCHAR(200),
+    role VARCHAR(50) DEFAULT 'customer',
+    phone VARCHAR(20),
     is_active BOOLEAN DEFAULT true,
-    last_login_at TIMESTAMP WITH TIME ZONE,
+    last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS meters (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    meter_serial VARCHAR(50) UNIQUE NOT NULL,
-    meter_type VARCHAR(50) DEFAULT 'single_phase',
-    firmware_version VARCHAR(50) DEFAULT '1.0.0',
-    status meter_status DEFAULT 'commissioning',
-    latitude DECIMAL(10, 7),
-    longitude DECIMAL(10, 7),
-    relay_connected BOOLEAN DEFAULT true,
-    current_tariff_per_kwh DECIMAL(8, 4) DEFAULT 2.1437,
-    customer_name VARCHAR(200),
-    customer_phone VARCHAR(20),
-    customer_address TEXT,
+    meter_number VARCHAR(50) UNIQUE NOT NULL,
+    customer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    credit_balance DECIMAL(12, 2) DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'active',
+    location TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
