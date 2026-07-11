@@ -1,6 +1,6 @@
-﻿import React, { useState } from "react"
+import React, { useState } from "react"
 
-const API_BASE = "https://stanfliet-ota-api.onrender.com"
+const API_BASE = import.meta.env.VITE_API_BASE || "https://stanfliet-ota-api.onrender.com"
 const AUTH_TOKEN_KEY = "stanfliet_auth_token"
 const AUTH_REFRESH_KEY = "stanfliet_refresh_token"
 const USER_DATA_KEY = "stanfliet_user_data"
