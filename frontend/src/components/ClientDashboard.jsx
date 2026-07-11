@@ -168,4 +168,3 @@ export default function ClientDashboard({ user, token }) {
   )
 }
 
-export default ClientDashboard
