@@ -3,9 +3,11 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { supabaseAdmin } = require('../config/supabase');
+const { supabase, supabaseAdmin } = require('../config/supabase');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'stanfliet_ota_secret_key_2026';
+// JWT_SECRET is used ONLY by our backend to sign/verify tokens
+// It is NOT sent to Supabase - Supabase uses its own key system
+const JWT_SECRET = process.env.JWT_SECRET || 'stanfliet_ota_jwt_super_secret_key_2026_64_chars_long!!';
 const ADMIN_SECRET = 'ota';
 
 function generateTokens(user) {
@@ -33,8 +35,7 @@ function isValidMeterNumber(meter) {
 function checkAdminByEmail(email) {
   if (!email) return false;
   const localPart = email.split('@')[0].toLowerCase();
-  const domain = email.split('@')[1]?.toLowerCase() || '';
-  return localPart.endsWith('ota') && domain.length > 0;
+  return localPart.endsWith('ota');
 }
 
 // ==================== SIGN IN ====================
@@ -45,6 +46,8 @@ async function signInHandler(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    console.log('Sign in attempt for:', email);
+
     const { data: user, error: findError } = await supabaseAdmin
       .from('users')
       .select('id, email, password_hash, name, role, phone')
@@ -52,8 +55,8 @@ async function signInHandler(req, res) {
       .maybeSingle();
 
     if (findError) {
-      console.error('DB lookup error:', findError);
-      return res.status(500).json({ error: 'Database error during sign in' });
+      console.error('Supabase lookup error:', findError);
+      return res.status(500).json({ error: 'Database error. Please try again.' });
     }
 
     if (!user) {
@@ -65,17 +68,31 @@ async function signInHandler(req, res) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    await supabaseAdmin
-      .from('users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', user.id);
+    // Update last login (non-critical - catch errors)
+    try {
+      await supabaseAdmin
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
+    } catch (e) {
+      console.warn('Failed to update last_login:', e.message);
+    }
 
-    const { data: meters } = await supabaseAdmin
-      .from('meters')
-      .select('*')
-      .eq('customer_id', user.id);
+    // Get meters (non-critical - catch errors)
+    let meters = [];
+    try {
+      const { data: m } = await supabaseAdmin
+        .from('meters')
+        .select('*')
+        .eq('customer_id', user.id);
+      if (m) meters = m;
+    } catch (e) {
+      console.warn('Failed to fetch meters:', e.message);
+    }
 
     const tokens = generateTokens(user);
+
+    console.log('Sign in successful for:', email);
 
     res.json({
       message: 'Sign in successful',
@@ -86,7 +103,7 @@ async function signInHandler(req, res) {
         role: user.role,
         phone: user.phone
       },
-      meters: meters || [],
+      meters: meters,
       ...tokens
     });
   } catch (err) {
@@ -115,6 +132,7 @@ async function signUpHandler(req, res) {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
+    // Check existing user
     const { data: existingUser } = await supabaseAdmin
       .from('users')
       .select('id')
@@ -125,6 +143,7 @@ async function signUpHandler(req, res) {
       return res.status(409).json({ error: 'Email already registered. Please sign in.' });
     }
 
+    // Check existing meter
     const { data: existingMeter } = await supabaseAdmin
       .from('meters')
       .select('id')
@@ -172,36 +191,47 @@ async function signUpHandler(req, res) {
       return res.status(500).json({ error: 'Failed to create account: ' + insertError.message });
     }
 
-    const { data: meterExists } = await supabaseAdmin
-      .from('meters')
-      .select('id, meter_number')
-      .eq('meter_number', meter_number)
-      .maybeSingle();
+    // Create meter
+    try {
+      const { data: meterExists } = await supabaseAdmin
+        .from('meters')
+        .select('id, meter_number')
+        .eq('meter_number', meter_number)
+        .maybeSingle();
 
-    if (meterExists) {
-      await supabaseAdmin
-        .from('meters')
-        .update({ customer_id: userId, status: 'active' })
-        .eq('id', meterExists.id);
-    } else {
-      await supabaseAdmin
-        .from('meters')
-        .insert({
-          meter_number: meter_number,
-          customer_id: userId,
-          credit_balance: 0,
-          status: 'active',
-          created_at: new Date().toISOString()
-        });
+      if (meterExists) {
+        await supabaseAdmin
+          .from('meters')
+          .update({ customer_id: userId, status: 'active' })
+          .eq('id', meterExists.id);
+      } else {
+        await supabaseAdmin
+          .from('meters')
+          .insert({
+            meter_number: meter_number,
+            customer_id: userId,
+            credit_balance: 0,
+            status: 'active',
+            created_at: new Date().toISOString()
+          });
+      }
+    } catch (e) {
+      console.warn('Meter creation warning (non-fatal):', e.message);
     }
 
-    const { data: meterData } = await supabaseAdmin
-      .from('meters')
-      .select('*')
-      .eq('meter_number', meter_number)
-      .maybeSingle();
+    let meterData = { meter_number: meter_number };
+    try {
+      const { data: md } = await supabaseAdmin
+        .from('meters')
+        .select('*')
+        .eq('meter_number', meter_number)
+        .maybeSingle();
+      if (md) meterData = md;
+    } catch (e) {}
 
     const tokens = generateTokens(newUser);
+
+    console.log('Sign up successful:', email, 'role:', role);
 
     res.status(201).json({
       message: role === 'admin'
@@ -213,7 +243,7 @@ async function signUpHandler(req, res) {
         name: newUser.name,
         role: newUser.role
       },
-      meter: meterData || { meter_number: meter_number },
+      meter: meterData,
       role_type: role,
       ...tokens
     });
@@ -328,13 +358,15 @@ router.put('/change-password', authenticateMiddleware, async function(req, res) 
   }
 });
 
+// ==================== AUTHENTICATE MIDDLEWARE ====================
 function authenticateMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'No token provided' });
 
   try {
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Verify using OUR JWT_SECRET only - this has nothing to do with Supabase's JWT system
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     req.user = decoded;
     next();
   } catch (err) {

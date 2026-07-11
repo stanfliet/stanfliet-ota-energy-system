@@ -15,6 +15,16 @@ const tariffRoutes = require('./routes/tariffRoutes');
 const app=express();
 const PORT=process.env.PORT||3001;
 
+// Log configuration on startup
+console.log('=== Stanfliet OTA API Starting ===');
+console.log('Port:', PORT);
+console.log('JWT_SECRET configured:', process.env.JWT_SECRET ? 'YES (' + process.env.JWT_SECRET.length + ' chars)' : 'NO (using fallback)');
+console.log('SUPABASE_URL configured:', process.env.SUPABASE_URL ? 'YES' : 'NO');
+console.log('SUPABASE_SERVICE_KEY configured:', process.env.SUPABASE_SERVICE_KEY ? 'YES (' + process.env.SUPABASE_SERVICE_KEY.length + ' chars)' : 'NO');
+console.log('DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
+console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN || 'default');
+console.log('================================');
+
 // PostgreSQL Pool (for routes that use raw PG)
 let pool;
 if (process.env.DATABASE_URL) {
