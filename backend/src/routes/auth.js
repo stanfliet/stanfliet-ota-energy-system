@@ -7,7 +7,6 @@ const { supabase, supabaseAdmin } = require('../config/supabase');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'stanfliet_ota_secret_key_2026';
 
-// Helper to generate JWT
 function generateTokens(user) {
   const accessToken = jwt.sign(
     { id: user.id, email: user.email, role: user.role || 'customer', name: user.name },
@@ -22,12 +21,10 @@ function generateTokens(user) {
   return { accessToken, refreshToken };
 }
 
-// Helper to validate email
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Generate 11-digit SA meter number
 function generateMeterNumber() {
   const prefix = 'SG';
   const timestamp = Date.now().toString().slice(-6);
@@ -35,100 +32,10 @@ function generateMeterNumber() {
   return prefix + timestamp + random;
 }
 
-// ==================== SIGN UP ====================
-router.post('/signup', async function(req, res) {
-  try {
-    const { email, password, name, phone } = req.body;
-
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Email, password, and name are required' });
-    }
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
-    }
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-
-    // Check if user already exists
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (existingUser) {
-      return res.status(409).json({ error: 'Email already registered. Please sign in.' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    // Create user
-    const userId = uuidv4();
-    const { data: newUser, error: insertError } = await supabaseAdmin
-      .from('users')
-      .insert({
-        id: userId,
-        email: email,
-        password_hash: passwordHash,
-        name: name,
-        role: 'customer',
-        phone: phone || null,
-        created_at: new Date().toISOString()
-      })
-      .select('id, email, name, role')
-      .single();
-
-    if (insertError) {
-      console.error('User insert error:', insertError);
-      return res.status(500).json({ error: 'Failed to create account' });
-    }
-
-    // Create meter for user
-    const meterNumber = generateMeterNumber();
-    const { data: meter, error: meterError } = await supabaseAdmin
-      .from('meters')
-      .insert({
-        meter_number: meterNumber,
-        customer_id: userId,
-        credit_balance: 0,
-        status: 'active',
-        created_at: new Date().toISOString()
-      })
-      .select('meter_number')
-      .single();
-
-    if (meterError) {
-      console.error('Meter creation error (non-fatal):', meterError);
-    }
-
-    // Generate tokens
-    const tokens = generateTokens(newUser);
-
-    res.status(201).json({
-      message: 'Account created successfully',
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        role: newUser.role
-      },
-      meter: { meter_number: meterNumber },
-      ...tokens
-    });
-  } catch (err) {
-    console.error('Signup error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // ==================== SIGN IN ====================
-router.post('/signin', async function(req, res) {
+async function signInHandler(req, res) {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
@@ -181,7 +88,91 @@ router.post('/signin', async function(req, res) {
     console.error('Signin error:', err);
     res.status(500).json({ error: 'Internal server error. Please try again.' });
   }
-});
+}
+
+// ==================== SIGN UP ====================
+async function signUpHandler(req, res) {
+  try {
+    const { email, password, name, phone } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Email, password, and name are required' });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email already registered. Please sign in.' });
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const userId = uuidv4();
+    const { data: newUser, error: insertError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        id: userId,
+        email: email,
+        password_hash: passwordHash,
+        name: name,
+        role: 'customer',
+        phone: phone || null,
+        created_at: new Date().toISOString()
+      })
+      .select('id, email, name, role')
+      .single();
+
+    if (insertError) {
+      console.error('User insert error:', insertError);
+      return res.status(500).json({ error: 'Failed to create account' });
+    }
+
+    const meterNumber = generateMeterNumber();
+    const { data: meter, error: meterError } = await supabaseAdmin
+      .from('meters')
+      .insert({
+        meter_number: meterNumber,
+        customer_id: userId,
+        credit_balance: 0,
+        status: 'active',
+        created_at: new Date().toISOString()
+      })
+      .select('meter_number')
+      .single();
+
+    if (meterError) {
+      console.error('Meter creation error (non-fatal):', meterError);
+    }
+
+    const tokens = generateTokens(newUser);
+
+    res.status(201).json({
+      message: 'Account created successfully',
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role
+      },
+      meter: { meter_number: meterNumber },
+      ...tokens
+    });
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
 
 // ==================== REFRESH TOKEN ====================
 router.post('/refresh', async function(req, res) {
@@ -302,6 +293,11 @@ function authenticateMiddleware(req, res, next) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
+
+// Register routes - BOTH /signin AND /login work
+router.post('/signin', signInHandler);
+router.post('/login', signInHandler);   // <-- Added /login alias
+router.post('/signup', signUpHandler);
 
 module.exports = router;
 module.exports.authenticate = authenticateMiddleware;
