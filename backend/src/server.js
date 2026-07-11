@@ -15,24 +15,19 @@ const tariffRoutes = require('./routes/tariffRoutes');
 const app=express();
 const PORT=process.env.PORT||3001;
 
-// Log configuration on startup
 console.log('=== Stanfliet OTA API Starting ===');
 console.log('Port:', PORT);
-console.log('JWT_SECRET configured:', process.env.JWT_SECRET ? 'YES (' + process.env.JWT_SECRET.length + ' chars)' : 'NO (using fallback)');
+console.log('JWT_SECRET configured:', process.env.JWT_SECRET ? 'YES' : 'NO (using fallback)');
 console.log('SUPABASE_URL configured:', process.env.SUPABASE_URL ? 'YES' : 'NO');
-console.log('SUPABASE_SERVICE_KEY configured:', process.env.SUPABASE_SERVICE_KEY ? 'YES (' + process.env.SUPABASE_SERVICE_KEY.length + ' chars)' : 'NO');
-console.log('DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
-console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN || 'default');
+console.log('SUPABASE_SERVICE_KEY configured:', process.env.SUPABASE_SERVICE_KEY ? 'YES' : 'NO');
 console.log('================================');
 
-// PostgreSQL Pool (for routes that use raw PG)
 let pool;
 if (process.env.DATABASE_URL) {
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   app.set('dbPool', pool);
 }
 
-// Premium middleware stack
 app.use(helmet({crossOriginResourcePolicy: {policy: 'cross-origin'}}));
 app.use(compression());
 app.use(cors({
@@ -45,7 +40,6 @@ app.use(morgan('combined'));
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({extended: true}));
 
-// Health check
 app.get('/',(req,res)=>{
   res.json({name: 'Stanfliet OTA Energy System API',version: '1.0.0',status: 'operational'});
 });
@@ -54,18 +48,15 @@ app.get('/api/v1/health',(req,res)=>{
   res.json({status: 'healthy',timestamp: new Date().toISOString(),uptime: process.uptime()});
 });
 
-// API Routes
 app.use('/api/v1/ai',ai);
 app.use('/api/v1/auth',auth);
 app.use('/api/v1/health',healthRoutes);
 app.use('/api/v1/tariffs',tariffRoutes);
 
-// 404 handler
 app.use((req,res)=>{
   res.status(404).json({error: 'Route not found',path: req.originalUrl});
 });
 
-// Global error handler
 app.use((err,req,res,next)=>{
   console.error('Unhandled error:',err);
   res.status(500).json({error: 'Internal server error',message: err.message});
