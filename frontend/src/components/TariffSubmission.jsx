@@ -70,7 +70,7 @@ export default function TariffSubmission({ token, user }) {
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-        {["form", "validation", "signatures", "complete"].map(s => (
+        { ["form", "validation", "signatures", "complete"].map(s => (
           <div key={s} style={{
             flex: 1, padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, textAlign: "center",
             background: activeStep === s ? "#3b82f6" : "var(--surface, #ffffff)",
@@ -79,7 +79,7 @@ export default function TariffSubmission({ token, user }) {
           }}>
             {s === "form" ? "1. Input Data" : s === "validation" ? "2. Validation" : s === "signatures" ? "3. Signatures" : "4. Complete"}
           </div>
-        ))}
+        )) }
       </div>
 
       {error && (
@@ -101,7 +101,7 @@ export default function TariffSubmission({ token, user }) {
             ))}
           </div>
           <button onClick={handleSubmit} disabled={loading}
-            style={{ marginTop: 20, padding: "12px 24px", borderRadius: 10, border: "none", background: loading ? "rgba(59,130,246,0.5)" : "#3b82f6", color: "white", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
+            style={{ marginTop: 20, padding: "12px 24px", borderRadius: 10, border: "none", background: loading ? "rgba(59,130,246,0.5)" : "#3b82f6", color: "white", fontSize: 14, fontWeight: 600 }}>
             {loading ? "Submitting..." : "Submit Tariff for ITVM Validation"}
           </button>
         </div>
@@ -151,11 +151,11 @@ export default function TariffSubmission({ token, user }) {
           </table>
           <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
             <button onClick={() => handleSign("utility")} disabled={loading}
-              style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: loading ? "rgba(59,130,246,0.5)" : "#3b82f6", color: "white", fontSize: 13, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
+              style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: loading ? "rgba(59,130,246,0.5)" : "#3b82f6", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Sign as Utility
             </button>
             <button onClick={() => handleSign("regulator")} disabled={loading}
-              style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: loading ? "rgba(139,92,246,0.5)" : "#8b5cf6", color: "white", fontSize: 13, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
+              style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: loading ? "rgba(139,92,246,0.5)" : "#8b5cf6", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Sign as Regulator (NERSA)
             </button>
             <button onClick={() => setActiveStep("form")}
