@@ -1,26 +1,14 @@
-﻿{
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/src/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/src/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/dist/index.html"
-    }
-  ]
+{
+    "outputDirectory":  "frontend/dist",
+    "buildCommand":  "npm install --prefix frontend \u0026\u0026 npm run build --prefix frontend",
+    "env":  {
+                "VITE_API_BASE":  "http://localhost:3001"
+            },
+    "version":  2,
+    "rewrites":  [
+                     {
+                         "destination":  "http://localhost:3001/",
+                         "source":  "/api/(.*)"
+                     }
+                 ]
 }

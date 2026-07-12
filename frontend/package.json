@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.1",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "mqtt": "^5.3.5",
@@ -16,8 +18,7 @@
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.21.3",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.1"
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.48",
