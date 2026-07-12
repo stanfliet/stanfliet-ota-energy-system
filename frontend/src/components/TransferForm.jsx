@@ -81,32 +81,22 @@ export default function TransferForm() {
         >Reverse Transaction</button>
       </div>
       {error && (
-        <div style={{ background: "rgba(239,68,68,0.15)", border: "1px solid #ef4444", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px", color: "#fca5a5", fontSize: "14px" }}>
-          {error}
-        </div>
+        <div style={{ background: "rgba(239,68,68,0.15)", border: "1px solid #ef4444", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px", color: "#fca5a5", fontSize: "14px" }}>{error}</div>
       )}
       {step === "form" && !result && (
         <div>
           <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", marginBottom: "8px" }}>Peer-to-Peer Credit Transfer</h2>
-          <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "24px", lineHeight: "1.5" }}>
-            Transfer prepaid electricity credits directly to another registered meter.
-          </p>
+          <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "24px", lineHeight: "1.5" }}>Transfer prepaid electricity credits directly to another registered meter.</p>
           <form onSubmit={handleTransfer}>
             <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#cbd5e1", marginBottom: "6px" }}>Source Meter *</label>
-            <input type="text" value={formData.source_meter} onChange={(e) => setFormData({ ...formData, source_meter: e.target.value })}
-              placeholder="12345678901" maxLength={11} required
-              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", marginBottom: "16px", fontFamily: "'Courier New', monospace", letterSpacing: "2px" }}
-            />
+            <input type="text" value={formData.source_meter} onChange={(e) => setFormData({ ...formData, source_meter: e.target.value })} placeholder="12345678901" maxLength={11} required
+              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", marginBottom: "16px", fontFamily: "'Courier New', monospace", letterSpacing: "2px" }} />
             <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#cbd5e1", marginBottom: "6px" }}>Destination Meter *</label>
-            <input type="text" value={formData.destination_meter} onChange={(e) => setFormData({ ...formData, destination_meter: e.target.value })}
-              placeholder="98765432109" maxLength={11} required
-              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", marginBottom: "16px", fontFamily: "'Courier New', monospace", letterSpacing: "2px" }}
-            />
+            <input type="text" value={formData.destination_meter} onChange={(e) => setFormData({ ...formData, destination_meter: e.target.value })} placeholder="98765432109" maxLength={11} required
+              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", marginBottom: "16px", fontFamily: "'Courier New', monospace", letterSpacing: "2px" }} />
             <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#cbd5e1", marginBottom: "6px" }}>Units (kWh) *</label>
-            <input type="number" value={formData.kwh} onChange={(e) => setFormData({ ...formData, kwh: Math.min(50, Math.max(1, parseInt(e.target.value) || 1)) })}
-              min="1" max="50" required
-              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", marginBottom: "6px" }}
-            />
+            <input type="number" value={formData.kwh} onChange={(e) => setFormData({ ...formData, kwh: Math.min(50, Math.max(1, parseInt(e.target.value) || 1)) })} min="1" max="50" required
+              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", marginBottom: "6px" }} />
             <div style={{ fontSize: "12px", color: formData.kwh > 50 ? "#ef4444" : formData.kwh > 40 ? "#eab308" : "#10b981", marginBottom: "16px" }}>
               {formData.kwh > 50 ? "Exceeds limit!" : formData.kwh > 40 ? "Near limit" : "Within limit"}
             </div>
@@ -144,18 +134,13 @@ export default function TransferForm() {
           <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "24px" }}>Reversals will undo the transfer and adjust meter balances.</p>
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#cbd5e1", marginBottom: "6px" }}>Transaction ID to Reverse</label>
-            <input type="text" value={reversalId} onChange={(e) => setReversalId(e.target.value)}
-              placeholder="P2P-XXXXXXXXXX" required
-              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-            />
+            <input type="text" value={reversalId} onChange={(e) => setReversalId(e.target.value)} placeholder="P2P-XXXXXXXXXX" required
+              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div style={{ marginBottom: "24px" }}>
             <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#cbd5e1", marginBottom: "6px" }}>Reason for Reversal</label>
-            <textarea value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              placeholder="e.g., Wrong meter, duplicate transaction"
-              rows={3}
-              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
-            />
+            <textarea value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} placeholder="e.g., Wrong meter, duplicate transaction" rows={3}
+              style={{ width: "100%", padding: "12px 14px", background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "14px", outline: "none", boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }} />
           </div>
           <button onClick={handleReversal} disabled={loading}
             style={{ width: "100%", padding: "14px 24px", borderRadius: 12, border: "none",
