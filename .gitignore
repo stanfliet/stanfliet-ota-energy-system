@@ -1,14 +1,1 @@
-﻿node_modules/
-dist/
-build/
-.env
-*.log
-.DS_Store
-coverage/
-.nyc_output/
-*.pem
-*.key
-*.cert
-docker-data/
-frontend/dist/
-backend/config/production.json
+.env.local
