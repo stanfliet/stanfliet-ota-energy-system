@@ -80,13 +80,11 @@ export default function TransferForm() {
             color: step === "reversal" || step === "reversal-done" ? "#f59e0b" : "#94a3b8", fontWeight: "600", cursor: "pointer", fontSize: "14px" }}
         >Reverse Transaction</button>
       </div>
-
       {error && (
         <div style={{ background: "rgba(239,68,68,0.15)", border: "1px solid #ef4444", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px", color: "#fca5a5", fontSize: "14px" }}>
           {error}
         </div>
       )}
-
       {step === "form" && !result && (
         <div>
           <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", marginBottom: "8px" }}>Peer-to-Peer Credit Transfer</h2>
@@ -120,7 +118,6 @@ export default function TransferForm() {
           </form>
         </div>
       )}
-
       {step === "result" && result && (
         <div style={{ textAlign: "center", padding: "32px 16px" }}>
           <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔄</div>
@@ -141,7 +138,6 @@ export default function TransferForm() {
           </div>
         </div>
       )}
-
       {step === "reversal" && (
         <div>
           <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", marginBottom: "8px" }}>Reverse Transaction</h2>
@@ -169,7 +165,6 @@ export default function TransferForm() {
           </button>
         </div>
       )}
-
       {step === "reversal-done" && reversalResult && (
         <div style={{ textAlign: "center", padding: "32px 16px" }}>
           <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
@@ -191,5 +186,3 @@ export default function TransferForm() {
     </div>
   )
 }
-
-// Build fix: 2026-07-12 15:49:49
