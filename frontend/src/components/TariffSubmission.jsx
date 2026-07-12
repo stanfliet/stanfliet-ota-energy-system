@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react"
+import React, { useState } from "react"
 
 const API_BASE = "https://stanfliet-ota-api.onrender.com"
 
@@ -7,15 +7,11 @@ const defaultInputs = {
   depreciation: 1220000,
   returnOnAssets: 8.5,
   primaryEnergyCost: 12500000,
-  oAndM_cost:@"
-import React, { useState } from "react"
-
-const API_BASE = "https://stanfliet-ota-api.onrender.com"
-
-const defaultInputs = {
-  rab: 48100000, depreciation: 1220000, returnOnAssets: 8.5,
-  primaryEnergyCost: 12500000, oAndM_cost: 3400000, iprep_cost: 890000,
-  efficiencyFactor: 0.95, inflationAdjustment: 5.2, totalVolumes: 28500000,
+  oAndM_cost: 3400000,
+  iprep_cost: 890000,
+  efficiencyFactor: 0.95,
+  inflationAdjustment: 5.2,
+  totalVolumes: 28500000,
   tariff_per_kwh: 2.1437
 }
 
@@ -100,7 +96,7 @@ export default function TariffSubmission({ token, user }) {
                   {key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
                 </label>
                 <input type="number" step="0.0001" value={val} onChange={e => updateField(key, e.target.value)}
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)" }} />
               </div>
             ))}
           </div>
