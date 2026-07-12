@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react"
+import React, { useState } from "react"
 
 const API_BASE = "https://stanfliet-ota-api.onrender.com"
 const AUTH_TOKEN_KEY = "stanfliet_auth_token"
@@ -122,7 +122,7 @@ export default function TransferForm() {
           </div>
           <div style={{ display: "flex", gap: "12px" }}>
             <button onClick={() => { setStep("reversal"); setError(""); }}
-              style={{ flex: 1, padding: "12px 20px", borderRadius: "8px", border: "1px solid #f59e0b", background: "transparent", color: "#f59e0b", fontWeight: "600", cursor: "pointer" }}>Reverse Transfer</button>
+              style={{ flex: 1, padding: "12px 20px", borderRadius: "8px", border: "1px solid #f59e0b", background: "transparent", color: "#f59e0b", fontWeight: "600", cursor: "pointer" }}>Reverse</button>
             <button onClick={() => { setStep("form"); setResult(null); setFormData({ source_meter: "", destination_meter: "", kwh: 10, reason: "" }); }}
               style={{ flex: 1, padding: "12px 20px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", color: "white", fontWeight: "600", cursor: "pointer" }}>New Transfer</button>
           </div>
