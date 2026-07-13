@@ -18,7 +18,8 @@
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.21.3",
-    "recharts": "^3.9.2"
+    "recharts": "^3.9.2",
+    "mapbox-gl": "^2.15.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.48",
