@@ -1,4 +1,4 @@
-﻿const express=require('express');
+const express=require('express');
 const cors=require('cors');
 const helmet=require('helmet');
 const compression=require('compression');
@@ -11,6 +11,14 @@ const ai = require('./routes/ai');
 const auth = require('./routes/auth');
 const healthRoutes = require('./routes/healthRoutes');
 const tariffRoutes = require('./routes/tariffRoutes');
+
+// Newly added minimal route stubs
+const meters = require('./routes/meters');
+const transactions = require('./routes/transactions');
+const ota = require('./routes/ota');
+const p2p = require('./routes/p2p');
+const reversal = require('./routes/reversal');
+const itvm = require('./routes/itvm');
 
 const app=express();
 const PORT=process.env.PORT||3001;
@@ -52,6 +60,14 @@ app.use('/api/v1/ai',ai);
 app.use('/api/v1/auth',auth);
 app.use('/api/v1/health',healthRoutes);
 app.use('/api/v1/tariffs',tariffRoutes);
+
+// Mount minimal route stubs so frontend doesn't receive 404s
+app.use('/api/v1/meters', meters);
+app.use('/api/v1/transactions', transactions);
+app.use('/api/v1/ota', ota);
+app.use('/api/v1/p2p', p2p);
+app.use('/api/v1/reversal', reversal);
+app.use('/api/v1/itvm', itvm);
 
 app.use((req,res)=>{
   res.status(404).json({error: 'Route not found',path: req.originalUrl});
