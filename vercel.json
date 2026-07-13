@@ -1,8 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "buildCommand": "cd frontend && npm ci && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install",
+  "installCommand": "npm ci",
+  "devCommand": "cd frontend && npm run dev",
   "routes": [
     { "src": "/(.*)", "dest": "/index.html" }
   ]
