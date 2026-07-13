@@ -1,0 +1,191 @@
+# fix-vercel.ps1
+# Run this from the repo root. Use: powershell -NoExit -ExecutionPolicy Bypass -File .\fix-vercel.ps1
+# This script:
+#  - stashes local changes (if any)
+#  - removes UTF-8 BOM from frontend/package.json if present
+#  - validates package.json
+#  - ensures vercel.json and .nvmrc exist
+#  - ensures .gitignore contains node_modules/.vercel
+#  - runs npm ci and npm run build in frontend and saves log
+#  - removes tracked node_modules from index (git rm --cached)
+#  - commits staged changes if any
+#  - rebases on remote fix/vercel-build and pushes branch
+#  - leaves helpful messages if manual steps required
+
+Set-StrictMode -Version Latest
+
+# Adjust this path if you saved the script elsewhere; otherwise assume current dir is repo root
+$RepoRoot = Resolve-Path .
+
+Write-Host "Repository root: $RepoRoot" -ForegroundColor Cyan
+
+# 1) Ensure branch exists locally, fetch remote
+git fetch origin
+$branch = 'fix/vercel-build'
+git rev-parse --verify $branch 2>$null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Branch $branch does not exist locally. Attempting to checkout from origin/$branch..." -ForegroundColor Yellow
+  git checkout -b $branch origin/$branch 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "Failed to checkout branch origin/$branch. Aborting." -ForegroundColor Red
+    exit 1
+  }
+} else {
+  git checkout $branch
+}
+
+# 2) Stash any local uncommitted changes (safe)
+$porcelain = git status --porcelain
+if ($porcelain) {
+  Write-Host "Working tree has local changes. Stashing them (message: 'wip: before vercel fix')..." -ForegroundColor Yellow
+  git stash push -m "wip: before vercel fix"
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "git stash failed. Please stash or commit manually, then re-run this script." -ForegroundColor Red
+    exit 1
+  }
+} else {
+  Write-Host "Working tree clean; no stash required." -ForegroundColor Green
+}
+
+# 3) Remove BOM from frontend/package.json if present and validate JSON
+$pkgPath = Join-Path $RepoRoot "frontend\package.json"
+if (-not (Test-Path $pkgPath)) {
+  Write-Host "Error: frontend/package.json not found at $pkgPath" -ForegroundColor Red
+  exit 1
+}
+
+$raw = Get-Content -Path $pkgPath -Raw -ErrorAction Stop
+# U+FEFF BOM removal
+$clean = $raw -replace '^\uFEFF',''
+if ($clean -ne $raw) {
+  Set-Content -Path $pkgPath -Value $clean -Encoding UTF8
+  Write-Host "Removed BOM from frontend/package.json" -ForegroundColor Green
+} else {
+  Write-Host "No BOM found in frontend/package.json" -ForegroundColor Green
+}
+
+# Validate JSON structure
+try {
+  $null = $clean | ConvertFrom-Json
+  Write-Host "frontend/package.json: valid JSON" -ForegroundColor Green
+} catch {
+  Write-Host "frontend/package.json: INVALID JSON. Error:" -ForegroundColor Red
+  Write-Host $_.Exception.Message
+  Write-Host "Aborting. Fix package.json manually and re-run the script." -ForegroundColor Red
+  exit 1
+}
+
+# 4) Ensure vercel.json exists (monorepo static build config)
+$vercelPath = Join-Path $RepoRoot "vercel.json"
+if (-not (Test-Path $vercelPath)) {
+  $vercelJson = @'
+{
+  "version": 2,
+  "builds": [
+    { "src": "frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
+  ]
+}
+'@
+  Set-Content -Path $vercelPath -Value $vercelJson -Encoding UTF8
+  Write-Host "Created vercel.json" -ForegroundColor Green
+} else {
+  Write-Host "vercel.json already exists; leaving as-is." -ForegroundColor Green
+}
+
+# 5) Ensure .nvmrc exists and pins Node 18
+$nvmPath = Join-Path $RepoRoot ".nvmrc"
+if (-not (Test-Path $nvmPath)) {
+  Set-Content -Path $nvmPath -Value "18" -Encoding UTF8
+  Write-Host "Created .nvmrc with '18'." -ForegroundColor Green
+} else {
+  Write-Host ".nvmrc exists; leaving as-is." -ForegroundColor Green
+}
+
+# 6) Ensure .gitignore contains node_modules and .vercel entries
+$gitignorePath = Join-Path $RepoRoot ".gitignore"
+if (-not (Test-Path $gitignorePath)) {
+  New-Item -Path $gitignorePath -ItemType File -Force | Out-Null
+}
+$gi = Get-Content -Path $gitignorePath -Raw
+$needed = @('node_modules/','backend/node_modules/','frontend/node_modules/','.vercel/')
+$added = $false
+foreach ($entry in $needed) {
+  if ($gi -notmatch [regex]::Escape($entry)) {
+    Add-Content -Path $gitignorePath -Value $entry
+    $added = $true
+    Write-Host "Appended '$entry' to .gitignore" -ForegroundColor Yellow
+  }
+}
+if (-not $added) {
+  Write-Host ".gitignore already contains required entries" -ForegroundColor Green
+}
+
+# 7) Install frontend dependencies and run build (capture log)
+Push-Location (Join-Path $RepoRoot "frontend")
+Write-Host "`nInstalling frontend dependencies (npm ci)..." -ForegroundColor Cyan
+npm ci
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "npm ci failed. Check the output above. Aborting script." -ForegroundColor Red
+  Pop-Location
+  exit 1
+}
+
+Write-Host "Running frontend build and saving log to frontend-build.log..." -ForegroundColor Cyan
+npm run build 2>&1 | Tee-Object -FilePath (Join-Path $RepoRoot "frontend-build.log")
+$buildExit = $LASTEXITCODE
+Pop-Location
+
+if ($buildExit -ne 0) {
+  Write-Host "Frontend build FAILED with exit code $buildExit. See frontend-build.log in the repo root for details." -ForegroundColor Red
+  Write-Host "Open that log and paste error output here if you need help." -ForegroundColor Yellow
+  exit 1
+} else {
+  Write-Host "Frontend build SUCCEEDED (local)." -ForegroundColor Green
+}
+
+# 8) Stage changed files (frontend/package.json, vercel.json, .nvmrc, .gitignore)
+git add frontend/package.json vercel.json .nvmrc .gitignore
+
+# 9) Remove tracked node_modules from index (safe)
+git rm -r --cached --ignore-unmatch backend/node_modules frontend/node_modules
+# Stage .gitignore in case it was modified
+git add .gitignore
+
+# 10) Commit only if there are staged changes
+$stagedFiles = git diff --cached --name-only
+if ($stagedFiles) {
+  git commit -m "chore(build): invoke vite via node; add vercel.json and .nvmrc; ignore node_modules"
+  Write-Host "Committed staged changes." -ForegroundColor Green
+} else {
+  Write-Host "No staged changes to commit." -ForegroundColor Yellow
+}
+
+# 11) Rebase onto remote fix/vercel-build to ensure fast-forward push
+git fetch origin
+git pull --rebase origin fix/vercel-build
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "git pull --rebase reported an error or conflicts. Resolve conflicts, then run 'git add <file>' and 'git rebase --continue'." -ForegroundColor Red
+  Write-Host "To abort rebase: git rebase --abort" -ForegroundColor Yellow
+  exit 1
+}
+
+# 12) Pop the stash if we stashed earlier
+$stashes = git stash list
+if ($stashes -match 'wip: before vercel fix') {
+  git stash pop
+  Write-Host "Popped stash 'wip: before vercel fix'." -ForegroundColor Green
+} else {
+  Write-Host "No matching stash to pop." -ForegroundColor Yellow
+}
+
+# 13) Push branch
+git push -u origin fix/vercel-build
+if ($LASTEXITCODE -eq 0) {
+  Write-Host "Pushed fix/vercel-build to origin. You can now open a PR at:" -ForegroundColor Green
+  Write-Host "https://github.com/stanfliet/stanfliet-ota-energy-system/compare/main...fix/vercel-build?expand=1" -ForegroundColor Cyan
+} else {
+  Write-Host "git push failed. Paste the git output here and I will guide next steps." -ForegroundColor Red
+  exit 1
+}
+
+Write-Host "`nScript finished. If you need the PR body text, ask and I'll paste it."

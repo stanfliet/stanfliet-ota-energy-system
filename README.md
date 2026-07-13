@@ -23,3 +23,5 @@ cd backend
 npm install
 npm run dev
 ```
+
+Triggered Vercel redeploy for package.json fix - 2026-07-13 03:46:34Z
