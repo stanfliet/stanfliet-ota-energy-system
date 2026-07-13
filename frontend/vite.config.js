@@ -21,7 +21,8 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           charts: ['recharts'],
-          maps: ['mapbox-gl']
+          // Use the map libraries actually present in package.json
+          maps: ['leaflet', 'react-leaflet', 'leaflet.heat']
         }
       }
     }
