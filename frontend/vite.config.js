@@ -1,21 +1,18 @@
-import { defineConfig } from "vite"
+﻿import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 const path = require('path');
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: "./", // important for deployed assets
+  base: "./",
   plugins: [react()],
   server: {
     port: 5173,
     proxy: {
-      // Proxy all /api requests to the real backend during development
       "/api": {
         target: "https://stanfliet-ota-api.onrender.com",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path // keep the same /api prefix
+        rewrite: (path) => path
       }
     }
   },
@@ -32,6 +29,8 @@ export default defineConfig({
           if (id.includes("leaflet") || id.includes("react-leaflet") || id.includes("leaflet.heat")) return "maps";
         }
       }
+    }
+  },
   resolve: {
     alias: {
       'mapbox-gl': path.resolve(__dirname, 'src/mapbox-gl-stub.js')
