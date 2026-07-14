@@ -2,7 +2,8 @@
   "version": 2,
   "buildCommand": "cd frontend && npm ci && npm run build",
   "outputDirectory": "frontend/dist",
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
+  "public": false,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
