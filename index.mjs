@@ -1,28 +1,14 @@
-// index.mjs - example: stream AI text using the `ai` package
-import 'dotenv/config'
-import { streamText } from 'ai'
-
-const apiKey = process.env.OPENAI_API_KEY || process.env.VERCEL_OIDC_TOKEN
-if (!apiKey) {
-  console.error('Missing credentials. Set OPENAI_API_KEY or VERCEL_OIDC_TOKEN in .env.local')
-  process.exit(1)
-}
-
-const model = 'openai/gpt-5.5'
-const prompt = 'Explain quantum computing in simple terms.'
-
-async function main() {
-  try {
-    const result = streamText({ model, prompt })
-
-    for await (const chunk of result.textStream) {
-      process.stdout.write(chunk)
-    }
-    process.stdout.write('\n')
-  } catch (err) {
-    console.error('Stream error:', err)
-    process.exit(1)
-  }
-}
-
-main()
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stanfliet OTA Energy System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./src/main.jsx"></script>
+  </body>
+</html>
