@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+﻿import React, { useState, useEffect } from "react"
 import LoginForm from "./components/LoginForm"
 import ClientDashboard from "./components/ClientDashboard"
 import ITVMDashboard from "./components/ITVMDashboard"
@@ -52,90 +52,61 @@ function App() {
   }
 
   if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "var(--bg, #f8fafc)", color: "var(--text, #1e293b)", fontSize: 14 }}>
-        Loading...
-      </div>
-    )
+    return <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"100vh",color:"#f59e0b",fontSize:"20px"}}>Loading...</div>
   }
 
   if (!user || !token) {
-    return (
-      <div style={{ minHeight: "100vh", background: "var(--bg, #f8fafc)", display: "flex", justifyContent: "center", alignItems: "center", padding: 24 }}>
-        <LoginForm onLogin={handleLogin} />
-      </div>
-    )
+    return <LoginForm onLogin={handleLogin} />
   }
 
   var tabs = [
-    { key: "dashboard", label: "Dashboard", icon: "??" },
-    { key: "purchase", label: "Buy Electricity", icon: "?" },
-    { key: "transfer", label: "Send Credits", icon: "??" },
-    { key: "meters", label: "My Meters", icon: "??" }
+    { key: "dashboard", label: "Dashboard", icon: "dashboard" },
+    { key: "purchase", label: "Buy Electricity", icon: "bolt" },
+    { key: "transfer", label: "Send Credits", icon: "send" },
+    { key: "meters", label: "My Meters", icon: "speed" }
   ]
 
-  // Admin/operator tabs
   if (user.role === "admin" || user.role === "operator" || user.role === "auditor") {
-    tabs.push({ key: "itvm", label: "Tariff ITVM", icon: "??" })
-    tabs.push({ key: "submit-tariff", label: "New Tariff", icon: "??" })
+    tabs.push({ key: "itvm", label: "Tariff ITVM", icon: "settings" })
+    tabs.push({ key: "submit-tariff", label: "New Tariff", icon: "add" })
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg, #f8fafc)" }}>
-      {/* Header */}
-      <div style={{
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)",
-        padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
-        position: "sticky", top: 0, zIndex: 100
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 22 }}>?</span>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "white" }}>Stanfliet OTA Energy</div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 1 }}>PREPAID ELECTRICITY SYSTEM</div>
-          </div>
+    <div style={{minHeight:"100vh",background:"#0f172a",color:"#f1f5f9"}}>
+      <header style={{background:"#1e293b",padding:"16px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #334155"}}>
+        <div>
+          <h1 style={{margin:0,fontSize:"20px",color:"#f59e0b"}}>Stanfliet OTA Energy</h1>
+          <small style={{color:"#64748b"}}>PREPAID ELECTRICITY SYSTEM</small>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{user.name || user.email}</span>
-          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>{user.role || "customer"}</span>
-          <button onClick={handleLogout} style={{
-            padding: "6px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.3)",
-            background: "transparent", color: "white", fontSize: 12, cursor: "pointer"
-          }}>Sign Out</button>
+        <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+          <span style={{color:"#94a3b8",fontSize:"14px"}}>{user.name || user.email}</span>
+          <span style={{background:"#334155",padding:"2px 8px",borderRadius:"4px",fontSize:"11px",textTransform:"uppercase",color:"#f59e0b"}}>{user.role || "customer"}</span>
+          <button onClick={handleLogout} style={{background:"transparent",border:"1px solid #ef4444",color:"#ef4444",padding:"6px 12px",borderRadius:"6px",cursor:"pointer",fontSize:"12px"}}>Sign Out</button>
         </div>
-      </div>
+      </header>
 
-      {/* Tab Navigation */}
-      <div style={{
-        display: "flex", gap: 4, padding: "8px 24px", overflowX: "auto",
-        background: "var(--surface, #fff)", borderBottom: "1px solid var(--border, #e2e8f0)"
-      }}>
+      <nav style={{display:"flex",gap:"8px",padding:"12px 24px",background:"#1e293b",borderBottom:"1px solid #334155",overflowX:"auto"}}>
         {tabs.map(function(tab) {
-          var isActive = activeTab === tab.key
           return (
-            <div key={tab.key} onClick={function() { setActiveTab(tab.key); }} style={{
-              display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 10,
-              fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", cursor: "pointer",
-              background: isActive ? "#3b82f6" : "transparent",
-              color: isActive ? "white" : "var(--text-secondary, #64748b)",
-              transition: "all 0.2s"
-            }}>
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-            </div>
+            <button key={tab.key} onClick={function(){setActiveTab(tab.key)}}
+              style={{padding:"8px 16px",borderRadius:"6px",border:"none",cursor:"pointer",fontSize:"13px",fontWeight:"600",
+                background: activeTab === tab.key ? "#f59e0b" : "transparent",
+                color: activeTab === tab.key ? "#0f172a" : "#94a3b8",
+                whiteSpace:"nowrap"}}>
+              {tab.label}
+            </button>
           )
         })}
-      </div>
+      </nav>
 
-      {/* Page Content */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 8px" }}>
+      <main style={{padding:"24px"}}>
         {activeTab === "dashboard" && <ClientDashboard user={user} token={token} />}
-        {activeTab === "purchase" && <PurchaseForm />}
-        {activeTab === "transfer" && <TransferForm />}
-        {activeTab === "meters" && <MeterDashboard />}
-        {activeTab === "itvm" && <ITVMDashboard />}
-        {activeTab === "submit-tariff" && <TariffSubmission />}
-      </div>
+        {activeTab === "purchase" && <PurchaseForm user={user} token={token} />}
+        {activeTab === "transfer" && <TransferForm user={user} token={token} />}
+        {activeTab === "meters" && <MeterDashboard user={user} token={token} />}
+        {activeTab === "itvm" && <ITVMDashboard user={user} token={token} />}
+        {activeTab === "submit-tariff" && <TariffSubmission user={user} token={token} />}
+      </main>
     </div>
   )
 }
