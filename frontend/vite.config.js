@@ -1,29 +1,32 @@
-﻿import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
 
 export default defineConfig({
+  base: "./", // important for deployed assets
   plugins: [react()],
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
+      // Proxy all /api requests to the real backend during development
+      "/api": {
+        target: "https://stanfliet-ota-api.onrender.com",
         changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path // keep the same /api prefix
       }
     }
   },
   build: {
-    outDir: 'dist',
+    outDir: "dist",
     sourcemap: false,
-    // Use esbuild for minification to avoid adding terser as a dependency
-    minify: 'esbuild',
+    minify: "esbuild",
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts'],
-          // Use the map libraries actually present in package.json
-          maps: ['leaflet', 'react-leaflet', 'leaflet.heat']
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) return "vendor";
+          if (id.includes("recharts")) return "charts";
+          if (id.includes("leaflet") || id.includes("react-leaflet") || id.includes("leaflet.heat")) return "maps";
         }
       }
     }

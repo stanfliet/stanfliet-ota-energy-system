@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react"
+import React, { useState } from "react"
 
 export default function MapView() {
   const [meters] = useState([
@@ -35,7 +35,7 @@ export default function MapView() {
         <div className="card">
           <div className="card-header">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <h3 className="card-title">🗺️ Meter Locations — Johannesburg Metro</h3>
+              <h3 className="card-title">??? Meter Locations � Johannesburg Metro</h3>
               <select value={mapStyle} onChange={e => setMapStyle(e.target.value)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid var(--border-color)",fontSize:12,background:"var(--bg-secondary)",color:"var(--text-primary)"}}>
                 <option value="standard">Standard</option>
                 <option value="satellite">Satellite</option>
@@ -82,18 +82,18 @@ export default function MapView() {
                 }}
                 title={`${m.serial} - ${m.customer}`}
               >
-                ⚡
+                ?
               </div>
             ))}
             {/* Map labels */}
             <div style={{position:"absolute",bottom:12,left:12,fontSize:11,color:"rgba(255,255,255,0.5)",background:"rgba(0,0,0,0.5)",padding:"4px 10px",borderRadius:6}}>
-              Johannesburg Metro • {meters.length} meters
+              Johannesburg Metro � {meters.length} meters
             </div>
           </div>
         </div>
 
         <div className="card">
-          <div className="card-header"><h3 className="card-title">{selected ? `📍 ${selected.serial}` : "📍 Meter Details"}</h3></div>
+          <div className="card-header"><h3 className="card-title">{selected ? `?? ${selected.serial}` : "?? Meter Details"}</h3></div>
           {selected ? (
             <div>
               <div className="form-group"><label>Serial</label><input readOnly value={selected.serial} /></div>
@@ -102,13 +102,13 @@ export default function MapView() {
               <div className="form-group"><label>Balance</label><input readOnly value={`R${selected.balance.toFixed(2)}`} /></div>
               <div className="form-group"><label>Location</label><input readOnly value={`${selected.lat.toFixed(4)}, ${selected.lng.toFixed(4)}`} /></div>
               <div style={{display:"flex",gap:8,marginTop:16}}>
-                <button className="btn btn-sm">📊 View Readings</button>
-                <button className="btn btn-sm btn-primary">🚐 Dispatch Inspector</button>
+                <button className="btn btn-sm">?? View Readings</button>
+                <button className="btn btn-sm btn-primary">?? Dispatch Inspector</button>
               </div>
             </div>
           ) : (
             <div style={{textAlign:"center",padding:40,color:"var(--text-light)"}}>
-              <div style={{fontSize:48,marginBottom:16}}>🗺️</div>
+              <div style={{fontSize:48,marginBottom:16}}>???</div>
               <p>Click a meter marker on the map to view its details.</p>
             </div>
           )}

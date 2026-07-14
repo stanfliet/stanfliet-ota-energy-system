@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 
 const API_BASE = "https://stanfliet-ota-api.onrender.com"
 
@@ -81,7 +81,7 @@ export default function ITVMDashboard({ token }) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>??</div>
           <h2>Loading ITVM Dashboard...</h2>
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Checking backend connection and tariff data</p>
           <div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTop: "3px solid #3b82f6", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "16px auto" }}></div>
@@ -133,14 +133,14 @@ export default function ITVMDashboard({ token }) {
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 8px 0", color: "var(--text, #1e293b)" }}>NERSA MYPD6 Case Study Simulation</h2>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 16px 0" }}>Click below to simulate the MYPD6 error that cost SA consumers R76 billion. The ITVM 10-point pipeline will detect and prevent the 3.5-sigma depreciation anomaly.</p>
         <button onClick={runSimulation} disabled={loading} style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: loading ? "rgba(59,130,246,0.5)" : "#3b82f6", color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-          {loading ? "Running Simulation..." : "▶ Run MYPD6 Simulation"}
+          {loading ? "Running Simulation..." : "? Run MYPD6 Simulation"}
         </button>
 
         {simResult && (
           <div style={{ marginTop: 16, padding: 16, background: "rgba(239,68,68,0.05)", borderRadius: 8, border: "1px solid rgba(239,68,68,0.2)" }}>
-            <h3 style={{ color: "#ef4444", fontSize: 15, margin: "0 0 12px 0" }}>⚠ MYPD6 Error Detected and Prevented!</h3>
+            <h3 style={{ color: "#ef4444", fontSize: 15, margin: "0 0 12px 0" }}>? MYPD6 Error Detected and Prevented!</h3>
             <p style={{ fontSize: 13, margin: "0 0 8px 0" }}><strong>What went wrong:</strong> {simResult.analysis && simResult.analysis.what_went_wrong}</p>
-            <p style={{ fontSize: 13, margin: "0 0 8px 0" }}><strong>Sigma anomaly:</strong> {simResult.analysis && simResult.analysis.sigma_anomaly}σ</p>
+            <p style={{ fontSize: 13, margin: "0 0 8px 0" }}><strong>Sigma anomaly:</strong> {simResult.analysis && simResult.analysis.sigma_anomaly}s</p>
             <p style={{ fontSize: 13, margin: "0 0 8px 0" }}><strong>Incorrect tariff:</strong> R{simResult.analysis && simResult.analysis.incorrect_tariff ? simResult.analysis.incorrect_tariff.toFixed(4) : "0"}/kWh</p>
             <p style={{ fontSize: 13, margin: "0 0 8px 0" }}><strong>Correct tariff:</strong> R{simResult.analysis && simResult.analysis.correct_tariff ? simResult.analysis.correct_tariff.toFixed(4) : "0"}/kWh</p>
             <p style={{ fontSize: 13, margin: "0 0 12px 0" }}><strong>Annual overcharge:</strong> R{simResult.analysis && simResult.analysis.annual_overcharge ? parseInt(simResult.analysis.annual_overcharge).toLocaleString() : "0"}</p>
@@ -210,7 +210,7 @@ export default function ITVMDashboard({ token }) {
             </div>
             <div>
               <div style={{ fontSize: 24, fontWeight: 700, color: blockchain.status && blockchain.status.valid ? "#10b981" : "#ef4444" }}>
-                {blockchain.status && blockchain.status.valid ? "✓ Valid" : "✗ Tampered"}
+                {blockchain.status && blockchain.status.valid ? "? Valid" : "? Tampered"}
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Chain Integrity</div>
             </div>

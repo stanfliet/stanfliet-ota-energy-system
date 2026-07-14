@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react"
+import React, { useState } from "react"
 
 export default function TariffVerifier() {
   const [submissions] = useState([
@@ -10,7 +10,7 @@ export default function TariffVerifier() {
   const [result, setResult] = useState(null)
 
   const checks = [
-    { name:"Depreciation Z-Score", passed:true, detail:"1.23σ (threshold: 3.5σ)" },
+    { name:"Depreciation Z-Score", passed:true, detail:"1.23s (threshold: 3.5s)" },
     { name:"RAB Change Detection", passed:true, detail:"6.8% change (threshold: 15%)" },
     { name:"Input Completeness", passed:true, detail:"All 6 required fields present" },
     { name:"Range Validation", passed:true, detail:"RoA=6.82%, Tariff=R2.1437" },
@@ -42,7 +42,7 @@ export default function TariffVerifier() {
 
       <div className="grid-2">
         <div className="card">
-          <div className="card-header"><h3 className="card-title">📋 Tariff Submissions</h3></div>
+          <div className="card-header"><h3 className="card-title">?? Tariff Submissions</h3></div>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {submissions.map(s => (
               <div
@@ -58,7 +58,7 @@ export default function TariffVerifier() {
                 }}
               >
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div><strong>{s.id}</strong><div style={{fontSize:12,color:"var(--text-light)"}}>{s.utility} • {s.date}</div></div>
+                  <div><strong>{s.id}</strong><div style={{fontSize:12,color:"var(--text-light)"}}>{s.utility} � {s.date}</div></div>
                   <div style={{textAlign:"right"}}>
                     <div style={{fontWeight:700}}>R{s.tariff}</div>
                     <span className={"badge " + (s.status === "finalized" ? "online" : "pending")}>{s.status}</span>
@@ -72,16 +72,16 @@ export default function TariffVerifier() {
         <div className="card">
           <div className="card-header">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <h3 className="card-title">🔍 NERSA 10-Check Pipeline</h3>
+              <h3 className="card-title">?? NERSA 10-Check Pipeline</h3>
               <button className="btn btn-primary" onClick={runValidation} disabled={running}>
-                {running ? <><span className="spinner" /> Validating...</> : "▶ Run Validation"}
+                {running ? <><span className="spinner" /> Validating...</> : "? Run Validation"}
               </button>
             </div>
           </div>
           {result ? (
             <div>
               <div className={"alert-box " + (result.passed ? "success" : "error")}>
-                {result.passed ? "✅ All 10 checks passed — Tariff is valid" : "⚠️ Some checks failed — Review required"}
+                {result.passed ? "? All 10 checks passed � Tariff is valid" : "?? Some checks failed � Review required"}
                 <div style={{fontSize:24,fontWeight:800,marginTop:8}}>{result.score}% Score</div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -93,7 +93,7 @@ export default function TariffVerifier() {
                     border: `1px solid ${c.passed ? "rgba(72,187,120,0.15)" : "rgba(252,129,129,0.15)"}`
                   }}>
                     <div>
-                      <span style={{fontWeight:600,fontSize:13}}>{c.passed ? "✅" : "❌"} {c.name}</span>
+                      <span style={{fontWeight:600,fontSize:13}}>{c.passed ? "?" : "?"} {c.name}</span>
                       <div style={{fontSize:11,color:"var(--text-light)",marginTop:2}}>{c.detail}</div>
                     </div>
                     <span className={"badge " + (c.passed ? "online" : "offline")}>{c.passed ? "Pass" : "Fail"}</span>
@@ -103,7 +103,7 @@ export default function TariffVerifier() {
             </div>
           ) : (
             <div style={{textAlign:"center",padding:40,color:"var(--text-light)"}}>
-              <div style={{fontSize:48,marginBottom:16}}>✅</div>
+              <div style={{fontSize:48,marginBottom:16}}>?</div>
               <p>Select a submission and click "Run Validation" to execute the NERSA 10-check prevention pipeline.</p>
             </div>
           )}
