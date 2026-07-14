@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react"
+import React, { useState } from "react"
 
 export default function AlertPanel() {
   const [alerts, setAlerts] = useState([
@@ -48,7 +48,7 @@ export default function AlertPanel() {
       <div className="card">
         <div className="card-header">
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <h3 className="card-title">🔔 Alert Feed</h3>
+            <h3 className="card-title">?? Alert Feed</h3>
             <div style={{display:"flex",gap:6}}>
               {severities.map(s => (
                 <button
@@ -79,11 +79,11 @@ export default function AlertPanel() {
             }}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <span style={{fontSize:20}}>
-                  {a.type.includes("tamper") ? "🔨" : a.type.includes("volt") ? "⚡" : a.type.includes("heart") ? "💔" : a.type.includes("balance") ? "💰" : a.type.includes("phase") ? "🔀" : "⚠️"}
+                  {a.type.includes("tamper") ? "??" : a.type.includes("volt") ? "?" : a.type.includes("heart") ? "??" : a.type.includes("balance") ? "??" : a.type.includes("phase") ? "??" : "??"}
                 </span>
                 <div>
                   <div style={{fontWeight:600,fontSize:14}}>{a.title}</div>
-                  <div style={{fontSize:12,color:"var(--text-light)"}}>{a.meter} • {a.time}</div>
+                  <div style={{fontSize:12,color:"var(--text-light)"}}>{a.meter} � {a.time}</div>
                 </div>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -91,7 +91,7 @@ export default function AlertPanel() {
                   {a.severity}
                 </span>
                 {a.status === "active" && (
-                  <button className="btn btn-sm" onClick={() => acknowledge(a.id)}>✓ Ack</button>
+                  <button className="btn btn-sm" onClick={() => acknowledge(a.id)}>? Ack</button>
                 )}
               </div>
             </div>
