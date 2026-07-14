@@ -52,62 +52,64 @@ function App() {
   }
 
   if (loading) {
-    return <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"100vh",color:"#f59e0b",fontSize:"20px"}}>Loading...</div>
+    return React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", color: "#f59e0b", fontSize: "20px" } }, "Loading...")
   }
 
   if (!user || !token) {
-    return <LoginForm onLogin={handleLogin} />
+    return React.createElement(LoginForm, { onLogin: handleLogin })
   }
 
   var tabs = [
-    { key: "dashboard", label: "Dashboard", icon: "dashboard" },
-    { key: "purchase", label: "Buy Electricity", icon: "bolt" },
-    { key: "transfer", label: "Send Credits", icon: "send" },
-    { key: "meters", label: "My Meters", icon: "speed" }
+    { key: "dashboard", label: "Dashboard" },
+    { key: "purchase", label: "Buy Electricity" },
+    { key: "transfer", label: "Send Credits" },
+    { key: "meters", label: "My Meters" }
   ]
 
   if (user.role === "admin" || user.role === "operator" || user.role === "auditor") {
-    tabs.push({ key: "itvm", label: "Tariff ITVM", icon: "settings" })
-    tabs.push({ key: "submit-tariff", label: "New Tariff", icon: "add" })
+    tabs.push({ key: "itvm", label: "Tariff ITVM" })
+    tabs.push({ key: "submit-tariff", label: "New Tariff" })
   }
 
-  return (
-    <div style={{minHeight:"100vh",background:"#0f172a",color:"#f1f5f9"}}>
-      <header style={{background:"#1e293b",padding:"16px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #334155"}}>
-        <div>
-          <h1 style={{margin:0,fontSize:"20px",color:"#f59e0b"}}>Stanfliet OTA Energy</h1>
-          <small style={{color:"#64748b"}}>PREPAID ELECTRICITY SYSTEM</small>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
-          <span style={{color:"#94a3b8",fontSize:"14px"}}>{user.name || user.email}</span>
-          <span style={{background:"#334155",padding:"2px 8px",borderRadius:"4px",fontSize:"11px",textTransform:"uppercase",color:"#f59e0b"}}>{user.role || "customer"}</span>
-          <button onClick={handleLogout} style={{background:"transparent",border:"1px solid #ef4444",color:"#ef4444",padding:"6px 12px",borderRadius:"6px",cursor:"pointer",fontSize:"12px"}}>Sign Out</button>
-        </div>
-      </header>
-
-      <nav style={{display:"flex",gap:"8px",padding:"12px 24px",background:"#1e293b",borderBottom:"1px solid #334155",overflowX:"auto"}}>
-        {tabs.map(function(tab) {
-          return (
-            <button key={tab.key} onClick={function(){setActiveTab(tab.key)}}
-              style={{padding:"8px 16px",borderRadius:"6px",border:"none",cursor:"pointer",fontSize:"13px",fontWeight:"600",
-                background: activeTab === tab.key ? "#f59e0b" : "transparent",
-                color: activeTab === tab.key ? "#0f172a" : "#94a3b8",
-                whiteSpace:"nowrap"}}>
-              {tab.label}
-            </button>
-          )
-        })}
-      </nav>
-
-      <main style={{padding:"24px"}}>
-        {activeTab === "dashboard" && <ClientDashboard user={user} token={token} />}
-        {activeTab === "purchase" && <PurchaseForm user={user} token={token} />}
-        {activeTab === "transfer" && <TransferForm user={user} token={token} />}
-        {activeTab === "meters" && <MeterDashboard user={user} token={token} />}
-        {activeTab === "itvm" && <ITVMDashboard user={user} token={token} />}
-        {activeTab === "submit-tariff" && <TariffSubmission user={user} token={token} />}
-      </main>
-    </div>
+  return React.createElement("div", { style: { minHeight: "100vh", background: "#0f172a", color: "#f1f5f9" } },
+    React.createElement("header", { style: { background: "#1e293b", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #334155" } },
+      React.createElement("div", null,
+        React.createElement("h1", { style: { margin: 0, fontSize: "20px", color: "#f59e0b" } }, "Stanfliet OTA Energy"),
+        React.createElement("small", { style: { color: "#64748b" } }, "PREPAID ELECTRICITY SYSTEM")
+      ),
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "12px" } },
+        React.createElement("span", { style: { color: "#94a3b8", fontSize: "14px" } }, user.name || user.email),
+        React.createElement("span", { style: { background: "#334155", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", textTransform: "uppercase", color: "#f59e0b" } }, user.role || "customer"),
+        React.createElement("button", { onClick: handleLogout, style: { background: "transparent", border: "1px solid #ef4444", color: "#ef4444", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px" } }, "Sign Out")
+      )
+    ),
+    React.createElement("nav", { style: { display: "flex", gap: "8px", padding: "12px 24px", background: "#1e293b", borderBottom: "1px solid #334155", overflowX: "auto" } },
+      tabs.map(function(tab) {
+        return React.createElement("button", {
+          key: tab.key,
+          onClick: function() { setActiveTab(tab.key) },
+          style: {
+            padding: "8px 16px",
+            borderRadius: "6px",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: "600",
+            background: activeTab === tab.key ? "#f59e0b" : "transparent",
+            color: activeTab === tab.key ? "#0f172a" : "#94a3b8",
+            whiteSpace: "nowrap"
+          }
+        }, tab.label)
+      })
+    ),
+    React.createElement("main", { style: { padding: "24px" } },
+      activeTab === "dashboard" ? React.createElement(ClientDashboard, { user: user, token: token }) : null,
+      activeTab === "purchase" ? React.createElement(PurchaseForm, { user: user, token: token }) : null,
+      activeTab === "transfer" ? React.createElement(TransferForm, { user: user, token: token }) : null,
+      activeTab === "meters" ? React.createElement(MeterDashboard, { user: user, token: token }) : null,
+      activeTab === "itvm" ? React.createElement(ITVMDashboard, { user: user, token: token }) : null,
+      activeTab === "submit-tariff" ? React.createElement(TariffSubmission, { user: user, token: token }) : null
+    )
   )
 }
 
