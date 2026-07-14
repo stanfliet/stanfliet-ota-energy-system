@@ -31,7 +31,7 @@ export default defineConfig({
           if (id.includes("recharts")) return "charts";
           if (id.includes("leaflet") || id.includes("react-leaflet") || id.includes("leaflet.heat")) return "maps";
         }
-      }
+      },
   resolve: {
     alias: {
       'mapbox-gl': path.resolve(__dirname, 'src/mapbox-gl-stub.js')
