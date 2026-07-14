@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 
 const API_BASE = "https://stanfliet-ota-api.onrender.com"
 const AUTH_TOKEN_KEY = "stanfliet_auth_token"

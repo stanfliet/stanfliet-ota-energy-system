@@ -1,0 +1,264 @@
+import React, { useState } from "react"
+
+const API_BASE = "https://stanfliet-ota-api.onrender.com"
+const AUTH_TOKEN_KEY = "stanfliet_auth_token"
+
+export default function PurchaseForm() {
+  const [step, setStep] = useState("form")
+  const [formData, setFormData] = useState({
+    meter_number: "",
+    amount_zar: 100,
+    payment_method: "card",
+    tariff_type: "standard",
+    customer_name: "",
+    email: "",
+    phone: ""
+  })
+  const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [purchases, setPurchases] = useState([])
+
+  const getToken = function() { return localStorage.getItem(AUTH_TOKEN_KEY); }
+
+  const handlePurchase = async function(e) {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    try {
+      var token = getToken()
+      var res = await fetch(API_BASE + "/api/v1/ota/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(formData)
+      })
+      if (!res.ok) { var errData = await res.json(); throw new Error(errData.error || "Purchase failed"); }
+      var data = await res.json()
+      setResult(data)
+      setStep("result")
+    } catch (err) {
+      setError(err.message)
+    }
+    setLoading(false)
+  }
+
+  const loadHistory = async function() {
+    setLoading(true)
+    try {
+      var token = getToken()
+      var res = await fetch(API_BASE + "/api/v1/transactions/purchases?limit=20", {
+        headers: { Authorization: "Bearer " + token }
+      })
+      if (res.ok) { var data = await res.json(); setPurchases(data.purchases || []); }
+    } catch (err) {}
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ padding: 24, maxWidth: 800, margin: "0 auto" }}>
+      {/* Tab Navigation */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        <div onClick={function() { setStep("form"); setResult(null); }} style={{
+          padding: "8px 20px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
+          background: step === "form" ? "#3b82f6" : "var(--surface, #fff)", color: step === "form" ? "white" : "var(--text-secondary, #64748b)",
+          border: "1px solid var(--border, #e2e8f0)"
+        }}>Purchase Electricity</div>
+        <div onClick={function() { setStep("history"); loadHistory(); }} style={{
+          padding: "8px 20px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
+          background: step === "history" ? "#3b82f6" : "var(--surface, #fff)", color: step === "history" ? "white" : "var(--text-secondary, #64748b)",
+          border: "1px solid var(--border, #e2e8f0)"
+        }}>Transaction History</div>
+      </div>
+
+      {error && (
+        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: 12, marginBottom: 20, color: "#ef4444", fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+
+      {step === "form" && !result && (
+        <form onSubmit={handlePurchase} style={{ background: "var(--surface, #fff)", borderRadius: 16, padding: 24, border: "1px solid var(--border, #e2e8f0)" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 20px 0", color: "var(--text, #1e293b)" }}>
+            OTA Prepaid Electricity Purchase
+          </h2>
+          <p style={{ fontSize: 13, color: "var(--text-secondary, #64748b)", marginBottom: 20, lineHeight: 1.5 }}>
+            Credits will be delivered automatically via OTA to your smart meter—no manual token entry required.
+            Your meter will receive the credit in real-time.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #64748b)", display: "block", marginBottom: 4 }}>Meter Number *</label>
+              <input value={formData.meter_number} onChange={function(e) { setFormData(function(p) { return Object.assign({}, p, { meter_number: e.target.value }); }); }}
+                placeholder="SM-2026-0001" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #64748b)", display: "block", marginBottom: 4 }}>Amount (ZAR) *</label>
+              <input type="number" value={formData.amount_zar} min="10" onChange={function(e) { setFormData(function(p) { return Object.assign({}, p, { amount_zar: parseFloat(e.target.value) || 0 }); }); }}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #64748b)", display: "block", marginBottom: 4 }}>Payment Method</label>
+              <select value={formData.payment_method} onChange={function(e) { setFormData(function(p) { return Object.assign({}, p, { payment_method: e.target.value }); }); }}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)" }}>
+                <option value="card">Card</option>
+                <option value="cash">Cash</option>
+                <option value="mobile_money">Mobile Money</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="crypto">Cryptocurrency</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #64748b)", display: "block", marginBottom: 4 }}>Tariff Type</label>
+              <select value={formData.tariff_type} onChange={function(e) { setFormData(function(p) { return Object.assign({}, p, { tariff_type: e.target.value }); }); }}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)" }}>
+                <option value="standard">Standard (R2.1437/kWh)</option>
+                <option value="commercial">Commercial (R4.1175/kWh)</option>
+                <option value="industrial">Industrial (R3.8920/kWh)</option>
+                <option value="night_saver">Night Saver (R1.5432/kWh)</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #64748b)", display: "block", marginBottom: 4 }}>Customer Name</label>
+              <input value={formData.customer_name} onChange={function(e) { setFormData(function(p) { return Object.assign({}, p, { customer_name: e.target.value }); }); }}
+                placeholder="John Doe" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary, #64748b)", display: "block", marginBottom: 4 }}>Email (for receipt)</label>
+              <input type="email" value={formData.email} onChange={function(e) { setFormData(function(p) { return Object.assign({}, p, { email: e.target.value }); }); }}
+                placeholder="john@example.com" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: 13, background: "var(--surface, #fff)", color: "var(--text, #1e293b)", boxSizing: "border-box" }} />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 20, padding: 16, background: "rgba(59,130,246,0.05)", borderRadius: 12, border: "1px solid rgba(59,130,246,0.2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary, #64748b)" }}>Amount:</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text, #1e293b)" }}>R{formData.amount_zar?.toFixed(2)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary, #64748b)" }}>Tariff Rate:</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text, #1e293b)" }}>R{formData.tariff_type === "commercial" ? "4.1175" : formData.tariff_type === "industrial" ? "3.8920" : formData.tariff_type === "night_saver" ? "1.5432" : "2.1437"}/kWh</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--border, #e2e8f0)", paddingTop: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text, #1e293b)" }}>Estimated Units:</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#3b82f6" }}>
+                {(formData.amount_zar / (formData.tariff_type === "commercial" ? 4.1175 : formData.tariff_type === "industrial" ? 3.8920 : formData.tariff_type === "night_saver" ? 1.5432 : 2.1437)).toFixed(2)} kWh
+              </span>
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading}
+            style={{ marginTop: 20, width: "100%", padding: "14px 24px", borderRadius: 12, border: "none",
+              background: loading ? "rgba(59,130,246,0.5)" : "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+              color: "white", fontSize: 15, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? "Processing Purchase & Delivering OTA..." : "Purchase & Deliver via OTA"}
+          </button>
+        </form>
+      )}
+
+      {step === "result" && result && (
+        <div style={{ background: "var(--surface, #fff)", borderRadius: 16, padding: 24, border: "1px solid var(--border, #e2e8f0)" }}>
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <div style={{ fontSize: 48, marginBottom: 8 }}>?</div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: "#10b981", margin: 0 }}>Purchase Successful!</h2>
+            <p style={{ fontSize: 13, color: "var(--text-secondary, #64748b)", marginTop: 4 }}>Credits delivered via OTA to meter</p>
+          </div>
+
+          {/* Receipt */}
+          <div style={{ border: "1px dashed var(--border, #e2e8f0)", borderRadius: 12, padding: 20, marginBottom: 20, background: "rgba(16,185,129,0.02)" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text, #1e293b)", margin: "0 0 16px 0", textAlign: "center" }}>
+              ELECTRICITY PURCHASE RECEIPT
+            </h3>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Receipt #:</span>
+              <span style={{ fontWeight: 600, color: "var(--text, #1e293b)" }}>{result.receipt?.number}</span>
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Meter Number:</span>
+              <span style={{ fontWeight: 600, color: "var(--text, #1e293b)" }}>{result.transaction?.meter_number}</span>
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Amount Paid:</span>
+              <span style={{ fontWeight: 600, color: "var(--text, #1e293b)" }}>R{result.amount_zar?.toFixed(2)}</span>
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Units Purchased:</span>
+              <span style={{ fontWeight: 700, color: "#3b82f6" }}>{result.units_kwh?.toFixed(2)} kWh</span>
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Tariff Rate:</span>
+              <span style={{ fontWeight: 600, color: "var(--text, #1e293b)" }}>R{result.tariff_rate}/kWh</span>
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Delivery Method:</span>
+              <span style={{ fontWeight: 600, color: "#10b981" }}>OTA Real-time (No token entry needed)</span>
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 4, display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "var(--text-secondary, #64748b)" }}>Transaction ID:</span>
+              <span style={{ fontWeight: 600, fontSize: 10, color: "var(--text, #1e293b)" }}>{result.transaction?.transaction_id}</span>
+            </div>
+            {result.sts_token && (
+              <div style={{ marginTop: 16, padding: 12, background: "rgba(59,130,246,0.05)", borderRadius: 8, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--text-secondary, #64748b)", marginBottom: 4 }}>STS Token (backup):</div>
+                <code style={{ fontSize: 18, fontWeight: 700, color: "#3b82f6", letterSpacing: 3 }}>{result.sts_token}</code>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={function() { window.print(); }}
+              style={{ flex: 1, padding: "10px 20px", borderRadius: 10, border: "1px solid var(--border, #e2e8f0)", background: "transparent", color: "var(--text, #1e293b)", fontSize: 13, cursor: "pointer" }}>
+              Print Receipt
+            </button>
+            <button onClick={function() { setResult(null); setStep("form"); }}
+              style={{ flex: 1, padding: "10px 20px", borderRadius: 10, border: "none", background: "#3b82f6", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              New Purchase
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "history" && (
+        <div style={{ background: "var(--surface, #fff)", borderRadius: 16, padding: 24, border: "1px solid var(--border, #e2e8f0)" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px 0", color: "var(--text, #1e293b)" }}>Purchase History</h2>
+          {purchases.length === 0 ? (
+            <p style={{ fontSize: 13, color: "var(--text-secondary, #64748b)", textAlign: "center", padding: 20 }}>No purchases found.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text-secondary, #64748b)", fontWeight: 600 }}>Date</th>
+                    <th style={{ textAlign: "left", padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text-secondary, #64748b)", fontWeight: 600 }}>Meter</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text-secondary, #64748b)", fontWeight: 600 }}>Amount</th>
+                    <th style={{ textAlign: "right", padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text-secondary, #64748b)", fontWeight: 600 }}>kWh</th>
+                    <th style={{ textAlign: "center", padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text-secondary, #64748b)", fontWeight: 600 }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.map(function(t, i) {
+                    return (
+                      <tr key={i}>
+                        <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text, #1e293b)" }}>{new Date(t.created_at).toLocaleDateString()}</td>
+                        <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", color: "var(--text, #1e293b)" }}>{t.meter_number}</td>
+                        <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", textAlign: "right", color: "var(--text, #1e293b)" }}>R{t.amount_zar?.toFixed(2)}</td>
+                        <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", textAlign: "right", color: "var(--text, #1e293b)" }}>{t.kwh_units?.toFixed(2)}</td>
+                        <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--border, #e2e8f0)", textAlign: "center" }}>
+                          <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 600,
+                            background: t.reversed ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)",
+                            color: t.reversed ? "#ef4444" : "#10b981" }}>
+                            {t.reversed ? "Reversed" : "Completed"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

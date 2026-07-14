@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import LoginForm from "./components/LoginForm"
 import ClientDashboard from "./components/ClientDashboard"
 import ITVMDashboard from "./components/ITVMDashboard"
@@ -68,16 +68,16 @@ function App() {
   }
 
   var tabs = [
-    { key: "dashboard", label: "Dashboard", icon: "📊" },
-    { key: "purchase", label: "Buy Electricity", icon: "⚡" },
-    { key: "transfer", label: "Send Credits", icon: "🔄" },
-    { key: "meters", label: "My Meters", icon: "📟" }
+    { key: "dashboard", label: "Dashboard", icon: "??" },
+    { key: "purchase", label: "Buy Electricity", icon: "?" },
+    { key: "transfer", label: "Send Credits", icon: "??" },
+    { key: "meters", label: "My Meters", icon: "??" }
   ]
 
   // Admin/operator tabs
   if (user.role === "admin" || user.role === "operator" || user.role === "auditor") {
-    tabs.push({ key: "itvm", label: "Tariff ITVM", icon: "🔐" })
-    tabs.push({ key: "submit-tariff", label: "New Tariff", icon: "📝" })
+    tabs.push({ key: "itvm", label: "Tariff ITVM", icon: "??" })
+    tabs.push({ key: "submit-tariff", label: "New Tariff", icon: "??" })
   }
 
   return (
@@ -89,7 +89,7 @@ function App() {
         position: "sticky", top: 0, zIndex: 100
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 22 }}>⚡</span>
+          <span style={{ fontSize: 22 }}>?</span>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "white" }}>Stanfliet OTA Energy</div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 1 }}>PREPAID ELECTRICITY SYSTEM</div>
