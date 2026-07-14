@@ -1,23 +1,12 @@
-# Dependencies
-backend/node_modules/
+﻿node_modules/
 frontend/node_modules/
-
-# Environment variables
-.env.local
-.env*.local
-
-# Build outputs
 frontend/dist/
-backend/build/
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+dist/
+.next/
+.env
+.env.local
+.env.*.local
+*.log
 .DS_Store
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+.vite/
+backend/node_modules/
