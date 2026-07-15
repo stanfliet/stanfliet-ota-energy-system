@@ -1,4 +1,4 @@
-﻿/* ==========================================
+/* ==========================================
    Stanfliet OTA Energy System — Premium CSS
    Glass morphism + light/dark/system theme
    ========================================== */
@@ -406,4 +406,5 @@ tr:hover td { background: rgba(99, 179, 237, 0.04); }
   .sidebar { display: none; }
   .main-content { margin-left: 0; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
-}
+}
+
