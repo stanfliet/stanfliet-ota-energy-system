@@ -1,1 +1,0 @@
-feat: add index.mjs example for streaming AI output
